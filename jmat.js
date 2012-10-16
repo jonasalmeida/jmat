@@ -387,6 +387,35 @@ gId:function(x){ // x is the id of an existing DOM element
 	return document.getElementById(x)
 },
 
+html:function(x){ // convertes stuff (JSON mostly) to html
+	var y = '';
+	switch (typeof(x)){
+		case 'object':
+			if(Array.isArray(x)){ // x is an array
+				/*if(typeof(x[0])=='object'){
+					y = x.map(function(xi){return '<td>'+jmat.html(xi)+'</td>'})
+				}
+				else{
+					y = '<table><tr><td>'+x.join('</td><td>')+'</td></tr></table>';
+				}
+				*/
+				y = '<tr>'+x.map(function(xi){return '<td>'+jmat.html(xi).replace(/^<table>/,'').replace(/<\/table>$/,'')+'</td>'}).join('')+'</tr>';
+				y = '<table>'+y+'</table>';
+			}
+			else{// x is an Object
+				for(var xi in x){
+					y+='<li><b>'+xi+'</b>: '+x[xi]+'</li>';
+				}
+			}
+			break;
+		default:
+			//throw('jmat.html input type not recognized:',x);
+			y = ''+x;
+	}
+	return y;
+	// 
+},
+
 im1to255:function(x){// converts {0-1} matrix into an im data matrix
 	4
 },
@@ -588,7 +617,7 @@ loadVar:function(V,cb,er,cbId){ // check that an external library is loaded, V i
 	}
 	else{
 		switch(V){
-			case 'Q':
+			case 'QM':
 				url = 'https://qmachine.org/q.js';break;
 			case 'CoffeeScript':
 				url = 'https://raw.github.com/jashkenas/coffee-script/master/extras/coffee-script.js';break;
@@ -782,11 +811,11 @@ prod:function(x){return x.reduce(function(a,b){return a*b})},
 qmachine:{
 	step:1000, // miliseconds between calls
 	load:function(cb,er){ // load qmachine js library
-		jmat.loadVar(['Q','CoffeeScript'],function(){
-			Q.submit=function(val,fun,box,more,jobId){return jmat.qmachine.submit(val,fun,box,more,jobId)};
-			//Q.map=function(val,fun,box,rvStep){return jmat.qmachine.map(val,fun,box,rvStep)};
-			//Q.reduce=function(val,fun,box,rvStep){return jmat.qmachine.reduce(val,fun,box,rvStep)};
-			Q.mapReduce=function(val,funMap,funReduce,box,step){return jmat.qmachine.mapReduce(val,funMap,funReduce,box,step)};
+		jmat.loadVar(['QM','CoffeeScript'],function(){
+			QM.submit=function(val,fun,box,more,jobId){return jmat.qmachine.submit(val,fun,box,more,jobId)};
+			//QM.map=function(val,fun,box,rvStep){return jmat.qmachine.map(val,fun,box,rvStep)};
+			//QM.reduce=function(val,fun,box,rvStep){return jmat.qmachine.reduce(val,fun,box,rvStep)};
+			QM.mapReduce=function(val,funMap,funReduce,box,step){return jmat.qmachine.mapReduce(val,funMap,funReduce,box,step)};
 		});
 	},
 	jobs:{},
@@ -799,17 +828,18 @@ qmachine:{
 
 	submit:function(val,fun,box,more,jobId){
 		if(!jobId){jobId=jmat.uid('job')};
-		jmat.qmachine.jobs[jobId] = {done:false,jobId:jobId};
-		if((typeof(Q)=='undefined')||(typeof(CoffeeScript)=='undefined')){
-			jmat.loadVar(['CoffeeScript','Q'],function(){
+		if(!more){more=[]};
+		jmat.qmachine.jobs[jobId] = {done:false,jobId:jobId,more:more};
+		/*if((typeof(Q)=='undefined')||(typeof(CoffeeScript)=='undefined')){
+			jmat.loadVar(['CoffeeScript','QM'],function(){
 				fun=jmat.qmachine.fun(fun);
 				jmat.qmachine.revalJob(val,fun,box,more,jobId);
 			})
 		}
-		else {
-			fun=jmat.qmachine.fun(fun);
-			jmat.qmachine.revalJob(val,fun,box,more,jobId);
-		}
+		else {*/
+		fun=jmat.qmachine.fun(fun);
+		jmat.qmachine.revalJob(val,fun,box,more,jobId);
+		//}
 		return jmat.qmachine.jobs[jobId];
 	},
 
@@ -851,7 +881,7 @@ qmachine:{
 			return CoffeeScript.eval(f);
 		}
 		else{ // assuming it is a function, kiss ass of JSLint zealots and add a ; before closing }
-			return jmat.parse(f.toString().replace(/([^;]{2})}/,'$1;}'));
+			return jmat.parse(f.toString().replace(/([ ]*)}$/,'$1;}'));
 		}
 	},
 	map:function(x,fun,box,step){ // jmat.qmachine.map(valArray,funMap)
@@ -861,8 +891,7 @@ qmachine:{
 		var n = x.length;
 		y = x.map(function(xi){return jmat.qmachine.submit(xi,fun,box,xi)}); // note original value being kept as more, the 4th input argument
 		// revive
-		var trv=setInterval
-
+		var trv=setInterval;
 		// monitor mapping
 		var done, doneStr='', i = 0;t = setInterval(function(){
 			i+=1;
@@ -894,7 +923,7 @@ qmachine:{
 		}
 		var n = x.length , doneStr = '';
 		//x.map(function(xi){xi.reduceStarted=false;return false}); // prepare reduce parm
-		//var y = Q.avar({val:x , box:box , done:false}); // results wil be placed here
+		//var y = QM.avar({val:x , box:box , done:false}); // results wil be placed here
 		var r = x.map(function(xi){return {}}); // keep flags for reduction process here
 		var i = 0, toReduce=[], t = setInterval(function(){ // timer
 			i+=1;

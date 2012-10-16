@@ -1,4 +1,4 @@
-//https://api.23andme.com/authorize/?redirect_uri=http://jmat.googlecode.com/git/23andme.html&response_type=code&client_id=09568fd79aa7911dad7727a024936f8d&scope=basic
+//https://api.23andme.com/authorize/?redirect_uri=https://jmat.googlecode.com/git/23andme.html&response_type=code&client_id=09568fd79aa7911dad7727a024936f8d&scope=basic
 // response directed to http://jmat.googlecode.com/git/23andme.html, alternative URL:
 //https://dl-web.dropbox.com/get/http/jmat/23andme.html?w=bba1484b&code={borrow from above}
 //
@@ -29,5 +29,23 @@ else if (!!localStorage.getItem('code')){ // find out if there is one in the loc
 	console.log('code = '+UAB.code);
 }
 else{
-	throw('23andme access code not found :-(')
+	console.log('23andme access code not provided')
 }
+
+// another try, this time using 23andme own library: https://api.23andme.com/docs/jslib/
+var d = document.createElement('div')
+d.id = 'snp_table';
+document.body.appendChild(d);
+d.textContent = 'loading snp table ...';
+
+/*TTAM.snpTable('snp_table', 'rs2476601', {
+            AA: 'Moderately higher odds of developing hypothyroidism.',
+            AG: 'Slightly higher odds of developing hypothyroidism.',
+            GG: 'Typical odds of developing hypothyroidism.',
+            order: 'AA,AG,GG'
+        	}, 
+        	{
+            width: 450
+        }
+    );
+*/
