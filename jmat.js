@@ -808,7 +808,7 @@ if(this.class(ctx)!="CanvasRenderingContext2D"){ // get context then
 
 prod:function(x){return x.reduce(function(a,b){return a*b})},
 
-qmachine:{
+qmachine:{ // this whole section will most likely not work any more, it was written to play with a draft version of Sean's Qmachine
 	step:1000, // miliseconds between calls
 	load:function(cb,er){ // load qmachine js library
 		jmat.loadVar(['QM','CoffeeScript'],function(){

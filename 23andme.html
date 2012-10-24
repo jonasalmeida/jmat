@@ -1,26 +1,28 @@
 <html>
 <head>
 <script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
-<script src="https://api.23andme.com/res/js/ttam-0.1.js"></script>
 </head>
 <body>
 <p style="color:blue;font-family:verdana">Jonas experimenting with 23andme new API:</p>
+<!--
 <script src='https://dl.dropbox.com/s/19vygxl13daeor2/23andme.js?dl=1'></script>
 <script src="https://api.23andme.com/res/js/ttam-0.1.js"></script>
 <div id="snp_table"></div>
+-->
+<script src="https://api.23andme.com/res/js/ttam-0.2.js"></script>
+<div id="wrapper">Loading...</div>
 <script>
- /*   TTAM.snpTable('snp_table', 'rs2476601', {
+    window.onload = function () {
+        var ttam = TTAM('09568fd79aa7911dad7727a024936f8d');
+        ttam.snpTable('wrapper', 'rs2476601', {
             AA: 'Moderately higher odds of developing hypothyroidism.',
             AG: 'Slightly higher odds of developing hypothyroidism.',
             GG: 'Typical odds of developing hypothyroidism.',
             order: 'AA,AG,GG'
-        	}, 
-        	{
+        }, {
             width: 450
-        }
-    );
-*/
-
+        });
+    };
 </script>
 </body>
 </html>
