@@ -1,3 +1,4 @@
+
 (function (window) {
     var TTAM2_DOMAIN = 'https://www.23andme.com';
 
@@ -41,9 +42,9 @@
                 window.clearTimeout(timeout_id);
                 iframe.style.height = data[1] + 'px';
                 iframe.style.visibility = 'visible';
-                while (iframe.previousSibling) {
-                    iframe.parentNode.removeChild(iframe.previousSibling);
-                }
+                //while (iframe.previousSibling) {
+                //    iframe.parentNode.removeChild(iframe.previousSibling);
+                //}
                 if (options.success instanceof Function) {
                     options.success();
                 }
