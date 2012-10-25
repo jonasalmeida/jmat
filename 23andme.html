@@ -28,5 +28,27 @@
 
     };
 </script>
+<hr>
+<p style="color:red;font-family:verdana">Reverse engineering experimentation :</p>
+<script src="https://www.dropbox.com/s/27is37dyeze5jd0/ttam-0.2-more.js?dl=1"></script>
+<!-- https://dl.dropbox.com/s/19vygxl13daeor2/23andme.js is the dropbox address of local ttam-0.2-more.js  -->
+<div id="wrapper2">Loading...</div>
+<script>
+    window.onload = function () {
+        var ttam2 = TTAM2('09568fd79aa7911dad7727a024936f8d');
+        ttam.snpTable('wrapper2', 'rs2476601', {
+            AA: 'Moderately higher odds of developing hypothyroidism.',
+            AG: 'Slightly higher odds of developing hypothyroidism.',
+            GG: 'Typical odds of developing hypothyroidism.',
+            order: 'AA,AG,GG'
+        }, {
+            width: 450
+        });
+		UAB23.start()
+
+    };
+</script>
+<hr>
+
 </body>
 </html>
