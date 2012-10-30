@@ -1123,6 +1123,14 @@ switch (y){
 return y;
 },
 
+text2table:function(txt){ // parse \n + \t text with col and row ids to a table structure
+	txt = txt.split('\n').map(function(txti){return txti.split('\t')}); // parse the rows and then the columns
+	return {
+		columns:txt[0],
+		rows:txt.slice(1)
+	};
+},
+
 textread:function(url,cb){
 	console.log('reading '+url+' ...');
 	if(!cb){cb=function(x){console.log(x)}}
