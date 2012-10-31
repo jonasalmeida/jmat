@@ -638,10 +638,10 @@ lookup:function(tbl,col_in,val_in,col_out){// lookup in table tbl,
 	// Find Columns
 	var col_in_i=this.find(tbl.columns,col_in);
 	if(col_in_i.length==0){throw('input column not found')}
+	
 	// if output columns not specified use the same as the input columns
-	if(!col_out){col_out=col_in;var col_out_i=col_in_i}
+	if(!col_out){col_out=tbl.columns;var col_out_i=jmat.range(col_out.length-1)}
 	else{var col_out_i=this.find(tbl.columns,col_out)}
-	// Find which rows have those values
 	var rows = this.transpose(tbl.rows) , r=[] , Ind=[];
 	for(var c in col_in_i){
 		r=this.find(rows[col_in_i[c]],val_in);
@@ -656,12 +656,6 @@ lookup:function(tbl,col_in,val_in,col_out){// lookup in table tbl,
 		}
 	}
 	return val_out;
-	
-	//return Ind
-	//var val_in_i=[];
-	//for(var i in tbl.rows){
-	//	if(cols[i]==col){col_in_i=i}
-	//}
 },
 
 max:function(x){ //return maximum value of array
@@ -980,6 +974,20 @@ rand:function(){
 	return jmat.dimfun(function(){return Math.random()},arguments)
 },
 
+range:function(a,b,c){ // creates a monotonic series
+	switch(arguments.length){
+		case 1:
+			c=a;b=1;a=0;
+			break;
+		case 2:
+			c=b;
+			b=1;
+	}
+	var y = [];
+	for(var i=a;i<=c;i=i+b){y.push(i)}
+	return y;
+},
+
 ranksum:function(x,y){ // this is just a first approximation while something saner emerges for stats
 	var s=x.map(function(xi){return y.map(function(yi){return [yi>xi,yi<xi]}).reduce(function(a,b){return [a[0]+b[0],a[1]+b[1]]})}).reduce(function(a,b){return [a[0]+b[0],a[1]+b[1]]});
 	return Math.abs(s[0]-s[1])/(x.length*y.length);
@@ -1124,11 +1132,23 @@ return y;
 },
 
 text2table:function(txt){ // parse \n + \t text with col and row ids to a table structure
-	txt = txt.split('\n').map(function(txti){return txti.split('\t')}); // parse the rows and then the columns
-	return {
+	txt = txt.split('\n'); // parse the rows 
+	if(txt[txt.length-1].length==0){txt = txt.slice(0,txt.length-1)};
+	txt = txt.map(function(txti){return txti.split('\t')}); //and then the columns
+	var tb = {
 		columns:txt[0],
 		rows:txt.slice(1)
 	};
+	// check that all rows are filled
+	var n = tb.columns.length;
+	
+	tb.rows = tb.rows.map(function(r){
+		if(r.length<n){
+			for(var i=r.length;i<n;i++){r.push(null)}
+		}
+		return r;
+	});
+	return tb
 },
 
 textread:function(url,cb){
