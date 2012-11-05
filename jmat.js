@@ -303,7 +303,7 @@ fieldnames:function(x){
 },
 
 find:function(x,patt,modifier){ // find wich elements of an array match a pattern
-	if(!modifier){modifier='gi'}// default is global and case insensitive
+	if(!modifier){modifier='i'}// default is case insensitive
 	var y = [];
 	if(Array.isArray(patt)){patt='('+patt.join(')|(')+')'} // allows multiple patterns
 	patt = new RegExp(patt,modifier);
@@ -314,6 +314,21 @@ find:function(x,patt,modifier){ // find wich elements of an array match a patter
 	}
 	return y
 },
+
+findExact:function(x,patt,modifier){ // find wich elements of an array match a pattern
+	if(!modifier){modifier='i'}// default is case insensitive
+	var y = [];
+	if(Array.isArray(patt)){patt='^('+patt.join(')|(')+')$'} // allows multiple patterns
+	else{patt='^'+patt+'$'}
+	patt = new RegExp(patt,modifier);
+	var M;
+	for(var i in x){
+		M=x[i].match(patt);
+		if(!!M){y.push(i)}
+	}
+	return y
+},
+
 
 fminsearch:function(fun,Parm0,x,y,Opt){// fun = function(x,Parm)
 	// example
@@ -636,15 +651,39 @@ lookup:function(tbl,col_in,val_in,col_out){// lookup in table tbl,
 	// for value in column col_out where the column col_in has the value val_in
 	var val_out={};// return results as a table
 	// Find Columns
-	var col_in_i=this.find(tbl.columns,col_in);
+	var col_in_i=this.findExact(tbl.columns,col_in);
 	if(col_in_i.length==0){throw('input column not found')}
-	
-	// if output columns not specified use the same as the input columns
+	// if output columns not specified then get all
 	if(!col_out){col_out=tbl.columns;var col_out_i=jmat.range(col_out.length-1)}
 	else{var col_out_i=this.find(tbl.columns,col_out)}
 	var rows = this.transpose(tbl.rows) , r=[] , Ind=[];
 	for(var c in col_in_i){
 		r=this.find(rows[col_in_i[c]],val_in);
+		if(r.length>0){for (var i in r){Ind.push(r[i])}}
+	}
+	Ind = this.unique(Ind);
+	val_out.columns=col_out_i.map(function(i){return tbl.columns[i]});
+	val_out.rows=this.zeros(Ind.length,col_out_i.length);
+	for(var i=0;i<val_out.columns.length;i++){
+		for(var j=0;j<Ind.length;j++){
+			val_out.rows[j][i]=rows[col_out_i[i]][Ind[j]]
+		}
+	}
+	return val_out;
+},
+
+lookupExact:function(tbl,col_in,val_in,col_out){// lookup in table tbl, 
+	// for value in column col_out where the column col_in has the value val_in
+	var val_out={};// return results as a table
+	// Find Columns
+	var col_in_i=this.findExact(tbl.columns,col_in);
+	if(col_in_i.length==0){throw('input column not found')}
+	// if output columns not specified then get all
+	if(!col_out){col_out=tbl.columns;var col_out_i=jmat.range(col_out.length-1)}
+	else{var col_out_i=this.findExact(tbl.columns,col_out)}
+	var rows = this.transpose(tbl.rows) , r=[] , Ind=[];
+	for(var c in col_in_i){
+		r=this.findExact(rows[col_in_i[c]],val_in);
 		if(r.length>0){for (var i in r){Ind.push(r[i])}}
 	}
 	Ind = this.unique(Ind);
@@ -1149,6 +1188,40 @@ text2table:function(txt){ // parse \n + \t text with col and row ids to a table 
 		return r;
 	});
 	return tb
+},
+
+tableLookup:function(tbl,col_in,val_in,col_out){ // jmat.tableLookup is the same as jmat.lookup + making sure all columns are represented
+	if(typeof(val_in)=="undefined"){val_in=""}; // get all 
+	if(col_out==""){col_out=tbl.columns} // in col_out is empty use all columns
+	if(typeof(col_out)=="undefined"){col_out=col_in};
+	var y = this.lookup(tbl,col_in,val_in,col_out);
+	if(!Array.isArray(col_out)){col_out=[col_out]}; // make sure col_out is an array
+	for (var i=0;i<col_out.length;i++){ // check that all col_out columns are represented
+		if(y.columns[i]!==col_out[i]){ // add missing column
+			y.columns.splice(i,0,col_out[i]);
+			y.rows.map(function(r){r = r.splice(i,0,null);return r});
+		}
+	}
+	return y;
+},
+
+tableLookupExact:function(tbl,col_in,val_in,col_out){ // jmat.tableLookup is the same as jmat.lookup
+	if(typeof(val_in)=="undefined"){val_in=".*"}; // get all 
+	if(col_out==""){col_out=tbl.columns}; // in col_out is empty use all columns
+	if(typeof(col_out)=="undefined"){col_out=col_in}; // if col_out is not provided use col_in
+	var y = this.lookupExact(tbl,col_in,val_in,col_out); // <-- exact lookup, this is different from above, .tabeLookup
+	if(!Array.isArray(col_out)){col_out=[col_out]}; // make sure col_out is an array
+	for (var i=0;i<col_out.length;i++){ // check that all col_out columns are represented
+		if(y.columns[i]!==col_out[i]){ // add missing column
+			y.columns.splice(i,0,col_out[i]);
+			y.rows.map(function(r){r = r.splice(i,0,null);return r});
+		}
+	}
+	return y;
+},
+
+tableUnion:function(tb1,tb2){ // union of two tables
+	//
 },
 
 textread:function(url,cb){
