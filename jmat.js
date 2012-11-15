@@ -26,6 +26,12 @@ array2str:function(x,sp){ // convert array into a sp separated
 	return y
 },
 
+array2obj:function(A){
+	var y = {};
+	A.map(function(x){y[x[0]]=x[1]});
+	return y;
+},
+
 arrayfun:function(x,fun,i){ // apply function to each element of an array
 	if (Array.isArray(x)){return x.map(function(xi,i){return jmat.arrayfun(xi,fun,i)})}
 	else{return fun(x,i)}
@@ -78,6 +84,18 @@ cloneArray:function(A){
 
 cloneVector:function(V){// fastar than cloneArray if your array only has one dimension
 	return V.map(function(v){return v})
+},
+
+console:function(id){
+	if(!id){id = 'jmatConsole'};
+	if(!jmat.gId(id)){
+		var div = document.createElement('div');
+		div.id = id;
+		document.body.appendChild(div);
+	}
+	// Now that we have a place to go lets populate it
+	div.innerHTML="..."; // start with a blank slate
+	return div;
 },
 
 colon:function(x){// equivalent to x(:)
@@ -223,6 +241,16 @@ disp:function(x){ // by default displays both in the console and in document.bod
 	document.body.innerHTML+='<br><span style="color:blue">'+x+'</span>';
 },
 
+div:function(id,html){
+	if(!this.gId(id)){
+		div = this.cEl('div');
+		div.id=id;
+		document.body.appendChild(div);
+	}
+	if(!!html){div.innerHTML=html};
+	return div
+},
+
 dotFun:function(A,B,fun){ // dot matrix function
 	4;
 },
@@ -326,7 +354,7 @@ findExact:function(x,patt,modifier){ // find wich elements of an array match a p
 		M=x[i].match(patt);
 		if(!!M){y.push(i)}
 	}
-	return y
+	return y;
 },
 
 
@@ -390,15 +418,6 @@ get:function(key,callback,url){ // get content at url or key
 },
 
 gId:function(x){ // x is the id of an existing DOM element
-	// return null if neither id nor class are found
-	// so constructs like !jmat.gId(someID) can be used
-	//var y=document.getElementById(x);
-	//if(!y){
-	//	var z=document.getElementsByClassName(x);
-	//	if(z.length>0){return z}
-	//	else{return y}
-	//}
-	//else{return y}
 	return document.getElementById(x)
 },
 
@@ -588,6 +607,11 @@ loadFiles:function(files,readAs,callback){
 	return i
 },
 
+loadGoogleCoreChart:function(cb){ // load Google corechart visualization
+	if(!cb){cb=function(){}};
+	jmat.loadVar('google',function(){google.load('visualization', '1', {'callback':cb, 'packages':['corechart']})});
+},
+
 readFile:function(f,readAs,callback){
 	var that = this;
 	if(!callback){callback=function(x){ // DEAFAULT CALLBACK - you may want to write your own
@@ -631,20 +655,39 @@ loadVar:function(V,cb,er,cbId){ // check that an external library is loaded, V i
 		}
 	}
 	else{
+		var url;
 		switch(V){
 			case 'QM':
 				url = 'https://qmachine.org/q.js';break;
 			case 'CoffeeScript':
 				url = 'https://raw.github.com/jashkenas/coffee-script/master/extras/coffee-script.js';break;
 			case 'jQuery':
-				url='jquery-1.8.2.min.js';break;
+				url='https://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js';break;
+			case 'jQueryUI':
+				if(typeof(jQuery)=="undefined"){ // check for jQuery dependency
+					url="";
+					jmat.loadVar('jQuery',function(){jmat.loadVar(V,cb,er,cbId)});
+				}
+				else{
+					url='https://ajax.googleapis.com/ajax/libs/jqueryui/1.9.1/jquery-ui.min.js';
+				}
+				break;
+			case 'd3':
+				url='https://cdnjs.cloudflare.com/ajax/libs/d3/2.10.0/d3.v2.min.js';break;
+			case 'google':
+				url='https://www.google.com/jsapi';break;
+			case 'crossfilter':
+				jmat.loadVar('d3'); // dependency
+				url='http://square.github.com/crossfilter/crossfilter.v1.min.js';break;
 			default :
 				throw('No library was found to assemble "'+V+'"');
 		}
-		jmat.load(url,cb,er);
-		console.log('variable "'+V+'"'+' loaded from '+url);
+		if(url.length>0){
+			jmat.load(url,cb,er);
+			console.log('variable "'+V+'"'+' loaded from '+url);
+		}
 	}
-	//return true;
+	return V;
 },
 
 lookup:function(tbl,col_in,val_in,col_out){// lookup in table tbl, 
@@ -760,6 +803,7 @@ parseUrl:function(url){ // parsing url and its arguments out
 	return u
 },
 
+/*
 plot:function(ctx,x,y,s,opt){ // plot
 if(this.class(ctx)!="CanvasRenderingContext2D"){ // get context then
 		switch (this.class(ctx)){
@@ -837,6 +881,24 @@ if(this.class(ctx)!="CanvasRenderingContext2D"){ // get context then
 	opt.y=y;
 	opt.radius=opt.MarkerSize;
 	return opt
+},
+*/
+
+plot:function(id,x,y,opt){
+	if(typeof(google)=="undefined"){
+		jmat.loadGoogleCoreChart(function(){jmat.plot(id,x,y,opt)});
+	}
+	else if(typeof(!google.visualization)=="undefined"){
+		google.load('visualization', '1', {'callback':function(){jmat.plot(id,x,y,opt)}, 'packages':['corechart']})
+	}
+	else{
+		console.log('plot');
+		var dt = jmat.transpose([x,y]);
+		dt.unshift(['x','y']);
+		var data = google.visualization.arrayToDataTable(dt);
+		var chart = new google.visualization.ScatterChart(jmat.div(id));
+		chart.draw(data);
+	}
 },
 
 prod:function(x){return x.reduce(function(a,b){return a*b})},
@@ -1039,6 +1101,13 @@ ranksum:function(x,y){ // this is just a first approximation while something san
 //	return this.qmachine.submit(val,fun,box,more,jobId);
 //},
 
+rEl:function(id,t){ // remove element
+	if(typeof(id)=='string'){var el = jmat.gId(id)}
+	else{ var el = id}
+	if(!t){el.parentNode.removeChild(el)}
+	else{setTimeout(function(){el.parentNode.removeChild(el)},t)}	
+},
+
 reval_old:function(x,fun,callback,url){ 
 	if (!Array.isArray(x)){x=[x]} // make sure x is an array
 	if (!Array.isArray(fun)){fun=[fun]} // make sure it is an array of functions
@@ -1083,6 +1152,97 @@ rgba:function(x){ // genertes rgba string HTML Color can understand for a 0 to 1
 rgb:function(x){ // genertes rgba string HTML Color can understand for a 0 to 1 vector of 3 or 4 elements
 	x=x.map(function(xi){return Math.round(xi*255)});
 	return ('rgb('+x.slice(0,3).toString()+')');
+},
+
+s3db:{ // S3DB connectivity
+	info:{uid:{},login:{}},
+	searchParms:function(){ // return object with parameters concatenated with the page's URL
+		return jmat.array2obj(document.location.search.slice(1).split('&').map(function(x){return x.split('=')}));
+	},
+	s3qlCall:function(p,cb,er){ // p can be a parameter object or a string with the URL
+		if(typeof(p)=="string"){p={url:p}};
+		var callId = jmat.uid('UID');
+		jmat.s3db.s3qlCall[callId]=cb;
+		//jmat.load(p.url+'?format=json&callback=jmat.s3db.s3qlCall.'+callId,function(){setTimeout('delete jmat.s3db.s3qlCall.'+callId,5000)},function(x){er(x);setTimeout('delete jmat.s3db.s3qlCall.'+callId,5000)});
+		var url=!p.url.match(/\?/)?p.url+'?':p.url+'&';
+		jmat.load(url+'format=json&callback=jmat.s3db.s3qlCall.'+callId,function(){setTimeout('delete jmat.s3db.s3qlCall.'+callId,5000)},er); // err call kept on reccord
+	},
+	UI:{
+		start:function(p,cb){ // do whatever UI you can
+			if(typeof(jQuery)=="undefined"){jmat.loadVar('jQuery',function(){jmat.s3db.UI.start(p,cb)})}
+			else{
+				if(typeof(p)=='function'){jmat.s3db.UI.start.callback=p;p=undefined} // if callback is submited as single input argument
+				//else{jmat.s3db.UI.start.callback=cb}
+				if(!p){p = jmat.s3db.searchParms();if(!p.url){p.url='type URL here'};}
+				else if(typeof(p)=='string'){p={url:p}}
+				var div = jmat.div('s3dbLogin');
+				jmat.gId('s3dbLogin').className='s3dbLogin';
+				div.innerHTML='S3DB login console:';
+				var liUrl = jmat.cEl('li');
+				liUrl.id='s3dbLoginLiUrl';
+				div.appendChild(liUrl);
+				if(!!p.url){ // if URL is specified
+					// try it
+					jmat.s3db.s3qlCall(p.url+'/S3QL.php',
+						function(x){ // on load
+							//console.log('URL OK:',x);
+							liUrl.innerHTML='URL: <span style="color:green">'+p.url+'</span>';
+							// the key now
+							if(!p.key){p.key='type/paste session key here'};
+							var liKey = jmat.cEl('li');
+							liKey.id='s3dbLoginLiKey';
+							div.appendChild(liKey);
+							////////////////
+							jmat.s3db.s3qlCall(p.url+'/URI.php?key='+p.key,
+								function(x){ // on load
+									console.log('key OK:',x);
+									if(!!x[0].error_code){
+										liKey.innerHTML='Key: <input id="liKeyInput" type="text" style="color:red" value ="'+p.key+'" size="50">';
+										var ii = jmat.cEl('input');ii.type='button';ii.value='Continue';liKey.appendChild(ii);
+										ii.onclick=function(){
+											p.key=jmat.gId('liKeyInput').value
+											jmat.s3db.UI.start(p);
+										}
+									}
+									else{
+										liKey.innerHTML='Key: <span style="color:green">'+p.key+'</span>';
+										var liLink = jmat.cEl('li');
+										liLink.id='s3dbLoginLiLink';
+										div.appendChild(liLink);
+										var url=document.location.origin+document.location.pathname+'?url='+p.url+'&key='+p.key;
+										liLink.innerHTML='Link: <a href="'+url+'">'+url+'</a>';
+										jmat.rEl('s3dbLogin',10000);
+										jmat.s3db.info.login=p;
+										jmat.s3db.info.uid=x[0];
+										if(!!jmat.s3db.UI.start.callback){jmat.s3db.UI.start.callback()}; // callback
+										}
+									
+								},
+								function(x){ //on error
+									'/'/// this is not supposed to happen when the url is already confirmed
+									liKey.innerHTML='Oho :-O, this is not supposed to happen, please contact systems Admin'; 
+								})
+							////////////////
+							
+						},
+						function(x){ //on error
+							console.log('ERR:',x);
+							liUrl.innerHTML='URL: <input id="liUrlInput" type="text" style="color:red" value ="'+p.url+'" size="50">';
+							var ii = jmat.cEl('input');ii.type='button';ii.value='Continue';liUrl.appendChild(ii);
+							ii.onclick=function(){
+								jmat.s3db.UI.start(jmat.gId('liUrlInput').value);
+							}
+					})
+				}
+				else{
+					
+				}
+			}		//
+		},
+		login:function(url,cb){  
+			
+		}
+	}
 },
 
 save:function(varValue,varName){//save variable in the localHost, for example, save('NC_007019',seq)
@@ -1191,32 +1351,27 @@ text2table:function(txt){ // parse \n + \t text with col and row ids to a table 
 },
 
 tableLookup:function(tbl,col_in,val_in,col_out){ // jmat.tableLookup is the same as jmat.lookup + making sure all columns are represented
-	if(typeof(val_in)=="undefined"){val_in=""}; // get all 
-	if(col_out==""){col_out=tbl.columns} // in col_out is empty use all columns
-	if(typeof(col_out)=="undefined"){col_out=col_in};
-	var y = this.lookup(tbl,col_in,val_in,col_out);
-	if(!Array.isArray(col_out)){col_out=[col_out]}; // make sure col_out is an array
-	for (var i=0;i<col_out.length;i++){ // check that all col_out columns are represented
-		if(y.columns[i]!==col_out[i]){ // add missing column
-			y.columns.splice(i,0,col_out[i]);
-			y.rows.map(function(r){r = r.splice(i,0,null);return r});
-		}
-	}
-	return y;
-},
-
-tableLookupExact:function(tbl,col_in,val_in,col_out){ // jmat.tableLookup is the same as jmat.lookup
+	if(!col_in){col_in=tbl.columns[0]}; // if no column is specified use the first
 	if(typeof(val_in)=="undefined"){val_in=".*"}; // get all 
 	if(col_out==""){col_out=tbl.columns}; // in col_out is empty use all columns
 	if(typeof(col_out)=="undefined"){col_out=col_in}; // if col_out is not provided use col_in
-	var y = this.lookupExact(tbl,col_in,val_in,col_out); // <-- exact lookup, this is different from above, .tabeLookup
+	var y = this.lookupExact(tbl,col_in,val_in,col_out); // <-- This is where it all happens !
 	if(!Array.isArray(col_out)){col_out=[col_out]}; // make sure col_out is an array
-	for (var i=0;i<col_out.length;i++){ // check that all col_out columns are represented
-		if(y.columns[i]!==col_out[i]){ // add missing column
-			y.columns.splice(i,0,col_out[i]);
-			y.rows.map(function(r){r = r.splice(i,0,null);return r});
+	// match list of columns with col_out
+	var n = tbl.rows.length, m = col_out.length, rt = this.transpose(tbl.rows);
+	var cc = col_out.map(function(c,i){ // assemble values as columns
+		var j = jmat.findExact(tbl.columns,c);
+		if(j.length==1){
+			var ci = rt[j[0]];
 		}
-	}
+		else if(j.length==0){
+			var ci = jmat.arrayfun(jmat.ones(n),function(){return null}); // null values for a column not found
+		}
+		else {throw('there should have been not more than one match, instead '+j.length+' were found')}
+		return ci
+	})
+	y.columns = col_out;
+	y.rows = this.transpose(cc);
 	return y;
 },
 
@@ -1326,6 +1481,6 @@ zeros:function(){
 	return jmat.dimfun(function(){return 0},arguments)
 },
 
-webrwUrl:'http://webrw.no.de',
+webrwUrl:'http://165.225.128.64',
 
 }
