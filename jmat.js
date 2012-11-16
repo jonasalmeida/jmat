@@ -676,6 +676,9 @@ loadVar:function(V,cb,er,cbId){ // check that an external library is loaded, V i
 				url='https://cdnjs.cloudflare.com/ajax/libs/d3/2.10.0/d3.v2.min.js';break;
 			case 'google':
 				url='https://www.google.com/jsapi';break;
+			case 'minerva':
+				url='http://minervajs.org/api';break;
+			case 'usm':
 			case 'crossfilter':
 				jmat.loadVar('d3'); // dependency
 				url='http://square.github.com/crossfilter/crossfilter.v1.min.js';break;
@@ -1159,88 +1162,105 @@ s3db:{ // S3DB connectivity
 	searchParms:function(){ // return object with parameters concatenated with the page's URL
 		return jmat.array2obj(document.location.search.slice(1).split('&').map(function(x){return x.split('=')}));
 	},
-	s3qlCall:function(p,cb,er){ // p can be a parameter object or a string with the URL
+	call:function(p,cb,er){ // p can be a parameter object or a string with the URL
 		if(typeof(p)=="string"){p={url:p}};
 		var callId = jmat.uid('UID');
-		jmat.s3db.s3qlCall[callId]=cb;
-		//jmat.load(p.url+'?format=json&callback=jmat.s3db.s3qlCall.'+callId,function(){setTimeout('delete jmat.s3db.s3qlCall.'+callId,5000)},function(x){er(x);setTimeout('delete jmat.s3db.s3qlCall.'+callId,5000)});
+		jmat.s3db.call[callId]=cb;
+		//jmat.load(p.url+'?format=json&callback=jmat.s3db.call.'+callId,function(){setTimeout('delete jmat.s3db.call.'+callId,5000)},function(x){er(x);setTimeout('delete jmat.s3db.call.'+callId,5000)});
 		var url=!p.url.match(/\?/)?p.url+'?':p.url+'&';
-		jmat.load(url+'format=json&callback=jmat.s3db.s3qlCall.'+callId,function(){setTimeout('delete jmat.s3db.s3qlCall.'+callId,5000)},er); // err call kept on reccord
+		jmat.load(url+'format=json&callback=jmat.s3db.call.'+callId,function(){setTimeout('delete jmat.s3db.call.'+callId,5000)},er); // err call kept on reccord
 	},
 	UI:{
-		start:function(p,cb){ // do whatever UI you can
-			if(typeof(jQuery)=="undefined"){jmat.loadVar('jQuery',function(){jmat.s3db.UI.start(p,cb)})}
-			else{
-				if(typeof(p)=='function'){jmat.s3db.UI.start.callback=p;p=undefined} // if callback is submited as single input argument
-				//else{jmat.s3db.UI.start.callback=cb}
-				if(!p){p = jmat.s3db.searchParms();if(!p.url){p.url='type URL here'};}
-				else if(typeof(p)=='string'){p={url:p}}
-				var div = jmat.div('s3dbLogin');
-				jmat.gId('s3dbLogin').className='s3dbLogin';
-				div.innerHTML='S3DB login console:';
-				var liUrl = jmat.cEl('li');
-				liUrl.id='s3dbLoginLiUrl';
-				div.appendChild(liUrl);
-				if(!!p.url){ // if URL is specified
-					// try it
-					jmat.s3db.s3qlCall(p.url+'/S3QL.php',
-						function(x){ // on load
-							//console.log('URL OK:',x);
-							liUrl.innerHTML='URL: <span style="color:green">'+p.url+'</span>';
-							// the key now
-							if(!p.key){p.key='type/paste session key here'};
-							var liKey = jmat.cEl('li');
-							liKey.id='s3dbLoginLiKey';
-							div.appendChild(liKey);
-							////////////////
-							jmat.s3db.s3qlCall(p.url+'/URI.php?key='+p.key,
-								function(x){ // on load
-									console.log('key OK:',x);
-									if(!!x[0].error_code){
-										liKey.innerHTML='Key: <input id="liKeyInput" type="text" style="color:red" value ="'+p.key+'" size="50">';
-										var ii = jmat.cEl('input');ii.type='button';ii.value='Continue';liKey.appendChild(ii);
-										ii.onclick=function(){
-											p.key=jmat.gId('liKeyInput').value
-											jmat.s3db.UI.start(p);
-										}
-									}
-									else{
-										liKey.innerHTML='Key: <span style="color:green">'+p.key+'</span>';
-										var liLink = jmat.cEl('li');
-										liLink.id='s3dbLoginLiLink';
-										div.appendChild(liLink);
-										var url=document.location.origin+document.location.pathname+'?url='+p.url+'&key='+p.key;
-										liLink.innerHTML='Link: <a href="'+url+'">'+url+'</a>';
-										jmat.rEl('s3dbLogin',10000);
-										jmat.s3db.info.login=p;
-										jmat.s3db.info.uid=x[0];
-										if(!!jmat.s3db.UI.start.callback){jmat.s3db.UI.start.callback()}; // callback
-										}
-									
-								},
-								function(x){ //on error
-									'/'/// this is not supposed to happen when the url is already confirmed
-									liKey.innerHTML='Oho :-O, this is not supposed to happen, please contact systems Admin'; 
-								})
-							////////////////
-							
-						},
-						function(x){ //on error
-							console.log('ERR:',x);
-							liUrl.innerHTML='URL: <input id="liUrlInput" type="text" style="color:red" value ="'+p.url+'" size="50">';
-							var ii = jmat.cEl('input');ii.type='button';ii.value='Continue';liUrl.appendChild(ii);
-							ii.onclick=function(){
-								jmat.s3db.UI.start(jmat.gId('liUrlInput').value);
-							}
-					})
-				}
-				else{
-					
-				}
-			}		//
+		input:function(id,val,ok){
+			var ip; // input element
+			if(typeof(id)=='string'){ip = jmat.gId(id)}
+			else{ip=id}
+			ip.size=50;
+			if(ok){ip.style.color='green'}
+			else{ip.style.color='red'}
+			ip.value=val;
+			ip.onclick=function(){ip.value='';ip.onclick=null}; // first click clears content
+			return ip;
 		},
-		login:function(url,cb){  
-			
+		login:function(url,cb,id){  // it can also be used just with a callback fundtion as teh single argument, see next line
+			if(typeof(jQuery)=="undefined"){jmat.loadVar('jQuery',function(){jmat.s3db.UI.login(url,cb,id)})}
+			else{
+				var login ={}, ip = jmat.s3db.UI.input;
+				if(!id){id = 's3dbLogin'}
+				if(typeof(url)=='function'){ // single callbcak argument
+					cb=url;
+					url=undefined;
+					var u = document.location.search.match(/url=([^&]+)/);
+					if(!!u){login.url=u[1]}
+					//console.log(url,cb);
+					}
+				else if(typeof(url)=='object'){login=url} // login info provided as an object
+				else if(typeof(url)=='string'){login.url=url} // url provided as a string
+				else{ // might it exist in the URL
+					var u = document.location.search.match(/url=([^&]+)/);
+					if(!!u){login.url=u[1]}
+				}
+				var div = jmat.div(id);div.className=id;
+				var id_url = id+'_url', id_key = id+'_key';
+				div.innerHTML='S3DB Login:<br>URL: <input id="'+id_url+'">';
+				ip_url=ip(id_url,'type or paste deployment URL, then press Enter');
+				// Key Check
+				var key_try = function(){ // assumes login.key
+					jmat.s3db.call(login.url+'/URI.php?key='+login.key,
+						function(x){
+							var ip_key = jmat.gId(id_key);
+							if(!!x[0].error_code){ // invalid key
+								ip_key.style.color='red';
+								ip_key.value+=' (invalid key, try again)';
+								ip_key.onclick=function(){ip_key.value=login.key;ip_key.onclick=null};
+								//
+							}
+							else{ // Credentials accepted, store them
+								jmat.s3db.info.login=login;
+								jmat.s3db.info.uid=x[0];
+								ip_key.style.color='green';
+								jmat.rEl('s3dbLogin',3000); // remove login div in 10 secs
+								var durl=document.location.href.replace(/url=[^&]+/,'').replace(/key=[^&]+/,'').replace(/[&]+/,'&').replace(/\?&/,'?');
+								if(!durl.match(/\?/)){durl+='?'};
+								if(!durl.match(/&/)){durl+='&'};
+								durl+='url='+login.url+'&key='+login.key;
+								jQuery('<br> Direct Link: <a href="'+durl+'">'+durl+'</a>').appendTo(div);
+								if(!!cb){cb()}; // CALLBACK IS HERE ! //
+								//console.log(x)
+								}
+						},
+						function(x){throw(x)} // this shouldn't happen :-O
+					)
+				}
+				// URL check
+				var url_try = function(url){
+					ip_url.value=login.url;
+					ip_url.onclick=null;
+					jmat.s3db.call(login.url+'/S3QL.php',
+					function(x){ // URL is good, move on to check key
+						ip_url.style.color='green';
+						jQuery('<br> &nbsp;Key: <input id="'+id_key+'">').appendTo(div);
+						var ip_key=ip(id_key,'type or paste session key, then press Enter');
+						var u = document.location.search.match(/key=([^&]+)/);
+						if(!!login.key){ip_key.value=login.key;key_try(login.key)}
+						else if(!!u){login.key=u[1];ip_key.value=login.key;key_try(login.key)}
+						else{ip_key.onkeyup=function(ev){if(ev.keyCode==13){login.key=ip_key.value;key_try(login.key)}}}
+					},
+					function(x){
+						ip_url.value+=' (not found, try again)';
+						ip_url.style.color='red';
+						ip_url.onclick=function(){ip_url.value=login.url;ip.onclick=null};
+						//ip_url.onclick=function(){jmat.s3db.UI.login(url,cb,id)};
+						ip_url.size=60;
+					}
+					)
+				}
+				ip_url.onkeyup=function(ev){if(ev.keyCode==13){login.url=ip_url.value;url_try(login.url)}};
+				// Start with URL
+				if(!!login.url){url_try(ip_url.value)}
+				//console.log(url,cb);
+				return jmat.gId(id_url)
+			}
 		}
 	}
 },
