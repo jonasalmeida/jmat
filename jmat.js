@@ -1213,6 +1213,7 @@ s3db:{ // S3DB connectivity
 								ip_key.style.color='red';
 								ip_key.value+=' (invalid key, try again)';
 								ip_key.onclick=function(){ip_key.value=login.key;ip_key.onclick=null};
+								ip_key.onkeyup=function(ev){if(ev.keyCode==13){login.key=ip_key.value;key_try(login.key)}};
 								//
 							}
 							else{ // Credentials accepted, store them
