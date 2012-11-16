@@ -1185,7 +1185,7 @@ s3db:{ // S3DB connectivity
 		login:function(url,cb,id){  // it can also be used just with a callback fundtion as teh single argument, see next line
 			if(typeof(jQuery)=="undefined"){jmat.loadVar('jQuery',function(){jmat.s3db.UI.login(url,cb,id)})}
 			else{
-				var login ={}, ip = jmat.s3db.UI.input;
+				var login ={}, ip = jmat.s3db.UI.input; // note ip =  jmat.s3db.UI.input !!!
 				if(!id){id = 's3dbLogin'}
 				if(typeof(url)=='function'){ // single callbcak argument
 					cb=url;
@@ -1233,6 +1233,28 @@ s3db:{ // S3DB connectivity
 						function(x){throw(x)} // this shouldn't happen :-O
 					)
 				}
+				// getKey button
+				var getKey = function(){ // use uname and pwd to generate a 24hr key from apilogin.php
+					var bt= this;
+					jQuery('<span> User name: <input type=text id="'+id+'_uname"> Password: <input type=password id="'+id+'_password"></span>').appendTo(this.parentNode);
+					
+					this.onclick=function(){ // call api key engine
+						jmat.s3db.call(login.url+'/apilogin.php?username='+jmat.gId(id+'_uname').value+'&password='+jmat.gId(id+'_password').value,
+						function(x){
+							var k = x[0].key_id;login.key=k;
+							jmat.gId(id+'_key').value=k;
+							key_try(k);
+						},
+						function(x){console.log(x)})
+					}
+					//jmat.gId(id+'_password').onclick=this.onclick;
+					jmat.gId(id+'_uname').onkeyup=function(ev){
+						if(ev.keyCode==13){jmat.gId(id+'_password').focus()};
+					}
+					jmat.gId(id+'_password').onkeyup=function(ev){
+						if(ev.keyCode==13){bt.click()};
+					}
+				};
 				// URL check
 				var url_try = function(url){
 					ip_url.value=login.url;
@@ -1240,12 +1262,18 @@ s3db:{ // S3DB connectivity
 					jmat.s3db.call(login.url+'/S3QL.php',
 					function(x){ // URL is good, move on to check key
 						ip_url.style.color='green';
-						jQuery('<br><a href="'+login.url+'/access_keys.php" target=_blank><b>Key</b></a>: <input id="'+id_key+'">').appendTo(div);
-						var ip_key=ip(id_key,'type or paste session key, then press Enter');
-						var u = document.location.search.match(/key=([^&]+)/);
-						if(!!login.key){ip_key.value=login.key;key_try(login.key)}
-						else if(!!u){login.key=u[1];ip_key.value=login.key;key_try(login.key)}
-						else{ip_key.onkeyup=function(ev){if(ev.keyCode==13){login.key=ip_key.value;key_try(login.key)}}}
+						// but only if it's not there already
+						if(!jmat.gId(id_key)){
+							var id_getKey=id+'_getKey';
+							jQuery('<br><a href="'+login.url+'/access_keys.php" target=_blank><b>Key</b></a>: <input id="'+id_key+'"><br><input id="'+id_getKey+'" type="button" value=">">').appendTo(div);
+							var ip_key=ip(id_key,'type or paste session key, then press Enter');
+							var ip_getKey=jmat.gId(id_getKey);
+							ip_getKey.onclick=getKey;
+							var u = document.location.search.match(/key=([^&]+)/);
+							if(!!login.key){ip_key.value=login.key;key_try(login.key)}
+							else if(!!u){login.key=u[1];ip_key.value=login.key;key_try(login.key)}
+							else{ip_key.onkeyup=function(ev){if(ev.keyCode==13){login.key=ip_key.value;key_try(login.key)}}}
+						}	
 					},
 					function(x){
 						ip_url.value+=' (not found, try again)';
