@@ -1240,7 +1240,7 @@ s3db:{ // S3DB connectivity
 					jmat.s3db.call(login.url+'/S3QL.php',
 					function(x){ // URL is good, move on to check key
 						ip_url.style.color='green';
-						jQuery('<br> &nbsp;Key: <input id="'+id_key+'">').appendTo(div);
+						jQuery('<br><a href="'+login.url+'/access_keys.php" target=_blank><b>Key</b></a>: <input id="'+id_key+'">').appendTo(div);
 						var ip_key=ip(id_key,'type or paste session key, then press Enter');
 						var u = document.location.search.match(/key=([^&]+)/);
 						if(!!login.key){ip_key.value=login.key;key_try(login.key)}
