@@ -37,6 +37,13 @@ arrayfun:function(x,fun,i){ // apply function to each element of an array
 	else{return fun(x,i)}
 },
 
+array2table:function(a){ // determines unique entries and builds a table with counts
+	var t = {columns:jmat.unique(a)};
+	t.rows = [];
+	t.rows[0] = t.columns.map(function(u){var c = 0; a.map(function(ai){if(ai==u){c++}});return c});
+	return t;
+},
+
 bin2dec:function(x){
 	var n=x.length;
 	return x.split('').map(function(xi,i){return xi*Math.pow(2,n-i-1)}).reduce(function(a,b){return a+b});
@@ -223,6 +230,10 @@ data2imData:function(data){ // the reverse of im2data, data is a matlabish set o
 		}
 	}
 	return imData;
+},
+
+deblank:function(s){ // remove tailing blanks from string
+	return s.replace(/^\s+/,'').replace(/\s+$/,'');
 },
 
 dec2bin:function(x,n){
@@ -592,6 +603,18 @@ load:function(url,cb,er){ // load script / JSON
 	return s.id
 },
 
+loadSync:function(url,cb,er){ // Synchronous version of jmat.load
+	var s = document.createElement('script');
+	s.async=false; // <-- this is the only difference !
+	s.src=url;
+	s.id = this.uid();
+	if(!!cb){s.onload=cb}
+	if(!!er){s.onerror=er}
+	document.body.appendChild(s);
+	setTimeout('document.body.removeChild(document.getElementById("'+s.id+'"));',3000); // is the waiting still needed ?
+	return s.id
+},
+
 loadScripts:function(urls,cb,er){ // loading multiple scripts sequentially, runn callback after the last one is loaded
 	console.log('loading script '+urls[0]+' ...');
 	if (urls.length>1){jmat.load(urls[0],function(){jmat.loadScripts(urls.slice(1))})} // recursion
@@ -682,11 +705,13 @@ loadVar:function(V,cb,er,cbId){ // check that an external library is loaded, V i
 			case 'crossfilter':
 				jmat.loadVar('d3'); // dependency
 				url='http://square.github.com/crossfilter/crossfilter.v1.min.js';break;
+			case 'S3QLtranslator':
+				url='http://js.s3db.googlecode.com/hg/translate/s3ql_translator.js';break;
 			default :
 				throw('No library was found to assemble "'+V+'"');
 		}
 		if(url.length>0){
-			jmat.load(url,cb,er);
+			jmat.loadSync(url,cb,er);
 			console.log('variable "'+V+'"'+' loaded from '+url);
 		}
 	}
@@ -1170,6 +1195,42 @@ s3db:{ // S3DB connectivity
 		var url=!p.url.match(/\?/)?p.url+'?':p.url+'&';
 		jmat.load(url+'format=json&callback=jmat.s3db.call.'+callId,function(){setTimeout('delete jmat.s3db.call.'+callId,5000)},er); // err call kept on reccord
 	},
+	s3ql:function(q,cb,er){ // S3QL queries
+		var p = jmat.clone(jmat.s3db.info.login);
+		var u = p.url+'/S3QL.php?query='+q+'&key='+p.key;
+		
+		// account for the possibility that q is in a compact format
+		jmat.s3db.decompact(q,function(q){
+			
+			console.log(u);
+		})
+		//var u = p.url+'/S3QL.php?query='+q+'&key='+p.key;
+		
+	},
+	decompact:function(c,cb){ // converts compact S3QL into XML S3QL. See s3ql.org for details. Note both assynchronous and synchronos execs are supported
+		// borrowing Lena's translator
+		if(c[0]!='<'){
+			if(typeof(S3QLtranslator)=='undefined'){
+				if(typeof(cb)!='function'){cb = function(x){
+					console.log(x)
+					}
+				}
+				jmat.loadVar(['jQuery','S3QLtranslator'],function(){cb(S3QLtranslator(c))});
+				console.log('S3QLtranslator was not loaded, it is now');
+				return "assynchronous execution ..."
+			}
+			else{
+				var y = S3QLtranslator(c);
+				if(typeof(cb)=='function'){return cb(y)}
+				else{return y} 
+			}
+		}
+		else{
+			if(typeof(cb)=='function'){return cb(c)}
+			else{return c}
+		}
+	},
+	
 	UI:{
 		input:function(id,val,ok){
 			var ip; // input element
@@ -1426,6 +1487,22 @@ tableLookup:function(tbl,col_in,val_in,col_out){ // jmat.tableLookup is the same
 
 tableUnion:function(tb1,tb2){ // union of two tables
 	//
+},
+
+table2html:function(t){  // table, table id, target element id
+	var h = '<table>';
+	// header
+	h += '<tr>';
+	for(var j=0;j<t.columns.length;j++){h+='<th>'+t.columns[j]+'</th>'}
+	h += '<tr>';
+	// body
+	for(var i=0;i<t.rows.length;i++){
+		h+='<tr>';
+		for(var j=0;j<t.columns.length;j++){h+='<td>'+t.rows[i][j]+'</td>'}
+		h+='</tr>';
+	}
+	h +='</table>';
+	return h
 },
 
 textread:function(url,cb){
