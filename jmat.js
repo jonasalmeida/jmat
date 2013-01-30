@@ -707,6 +707,10 @@ loadVar:function(V,cb,er,cbId){ // check that an external library is loaded, V i
 				url='http://square.github.com/crossfilter/crossfilter.v1.min.js';break;
 			case 'S3QLtranslator':
 				url='http://js.s3db.googlecode.com/hg/translate/s3ql_translator.js';break;
+			case 'PUBNUB':
+					url='http://cdn.pubnub.com/pubnub-3.3.min.js';break;
+			case 'cBio':
+					url='https://dl.dropbox.com/s/x7yvewsh7xs1xtu/cBio.js?dl=1';break; // dev link
 			default :
 				throw('No library was found to assemble "'+V+'"');
 		}
@@ -926,6 +930,16 @@ plot:function(id,x,y,opt){
 		var data = google.visualization.arrayToDataTable(dt);
 		var chart = new google.visualization.ScatterChart(jmat.div(id));
 		chart.draw(data);
+	}
+},
+
+post:function(x,id){ // post x onto DOM element
+	if(typeof(jQuery)=='undefined'){jmat.loadVar('jQuery',function(){jmat.post(x,id)})}
+	else{
+		if(typeof(x)=='string'){x = jQuery(x);x=x[0]};
+		if(!id){id = jmat.uid('UID')}
+		if(!jmat.gId(id)){var div = jmat.cEl('div');div.id=id;document.body.appendChild(div)}
+		jmat.gId(id).appendChild(x);
 	}
 },
 
@@ -1188,7 +1202,8 @@ s3db:{ // S3DB connectivity
 		return jmat.array2obj(document.location.search.slice(1).split('&').map(function(x){return x.split('=')}));
 	},
 	call:function(p,cb,er){ // p can be a parameter object or a string with the URL
-		if(typeof(p)=="string"){p={url:p}};
+		if(typeof(p)=="string"){p={url:p}}
+		if(!cb){cb = function(x){console.log('Success: ',x)}}
 		var callId = jmat.uid('UID');
 		jmat.s3db.call[callId]=cb;
 		//jmat.load(p.url+'?format=json&callback=jmat.s3db.call.'+callId,function(){setTimeout('delete jmat.s3db.call.'+callId,5000)},function(x){er(x);setTimeout('delete jmat.s3db.call.'+callId,5000)});
@@ -1231,6 +1246,28 @@ s3db:{ // S3DB connectivity
 		}
 	},
 	
+	login:function(info,cb,id){ // builds on jmat.s3db.UI.login, if you want to do it quietly use id of hidden id
+		if(!cb){cb=function(){console.log("jmat.s3db.info.uri:",jmat.s3db.info.uri)}}
+		if(!info){ // this info argument is very flexible, see comments at jmat.s3db.UI.login 
+			this.UI.login(cb); // ask for them or pick them up from the URL
+		}
+		else{ // assume they are correct and move on
+			  // remember login is a structure of the type: {login:{url:"...",key:"..."},uid:{...}}
+			
+			//check that info is not being passed as the contents of info.login
+			if(!info.login){
+				jmat.s3db.info.login=info;
+				// now get uid information
+				jmat.s3db.call(jmat.s3db.info.login.url+"/URI.php?key="+jmat.s3db.info.login.key,function(x){jmat.s3db.info.uri=x[0];cb()});
+			}
+			else{
+				this.info=info;
+				cb();
+			}
+		}
+		
+	},
+	
 	UI:{
 		input:function(id,val,ok){
 			var ip; // input element
@@ -1243,7 +1280,9 @@ s3db:{ // S3DB connectivity
 			ip.onclick=function(){ip.value='';ip.onclick=null}; // first click clears content
 			return ip;
 		},
-		login:function(url,cb,id){  // it can also be used just with a callback fundtion as teh single argument, see next line
+		login:function(url,cb,id){  // it can also be used just with a callback function as teh single argument, 
+									// or with a {url:"...",key:"..."} object
+									// note the credetials of teh active connection are kept at jmat.s3db.info
 			if(typeof(jQuery)=="undefined"){jmat.loadVar('jQuery',function(){jmat.s3db.UI.login(url,cb,id)})}
 			else{
 				var login ={}, ip = jmat.s3db.UI.input; // note ip =  jmat.s3db.UI.input !!!
@@ -1281,7 +1320,7 @@ s3db:{ // S3DB connectivity
 								jmat.s3db.info.login=login;
 								jmat.s3db.info.uid=x[0];
 								ip_key.style.color='green';
-								jmat.rEl('s3dbLogin',3000); // remove login div in 10 secs
+								jmat.rEl(id,3000); // remove login div in 10 secs
 								var durl=document.location.href.replace(/url=[^&]+/,'').replace(/key=[^&]+/,'').replace(/[&]+/,'&').replace(/\?&/,'?');
 								if(!durl.match(/\?/)){durl+='?'};
 								if(!durl.match(/&/)){durl+='&'};
