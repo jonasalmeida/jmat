@@ -737,6 +737,7 @@ loadVar:function(V,cb,er,cbId){ // check that an external library is loaded, V i
 			case 'minerva':
 				url='http://minervajs.org/api';break;
 			case 'usm':
+				url='https://raw.github.com/usm/usm.github.com/master/usm.js';break;
 			case 'crossfilter':
 				jmat.loadVar('d3'); // dependency
 				url='http://square.github.com/crossfilter/crossfilter.v1.min.js';break;
