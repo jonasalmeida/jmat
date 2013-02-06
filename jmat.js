@@ -55,6 +55,16 @@ cat:function(x,y){ // cat will work for matrices and objects
 	return this.parse(x.slice(0,x.length-1)+','+y.slice(1,y.length));		
 },
 
+callback:function(url,fun,success){ // jmat.callback('https://api.github.com/users/jonasalmeida',function(x){console.log(x)})
+	if(!fun){fun=function(x){console.log(x)}} // default is to dump it on teh console
+	if(typeof(fun)=='function'){
+		var funId = this.uid('fun');
+		this.callback[funId]=function(x){delete jmat.callback[funId];return fun(x)};
+		this.load(url+'?callback=jmat.callback.'+funId,success);
+	}
+	else{this.load(url+'?callback='+fun,success)} // if fun is justthe function name	
+},
+
 catArray:function(A){ // optimized for conCATenation of an array of numerically indexed arrays
 	// this function was developed to adress memory issues of dealing with large arrays, not performance
 	var Astr='[',Ai='';
@@ -652,6 +662,26 @@ readFile:function(f,readAs,callback){
 	reader[readAs](f);
 },
 
+require:function(lib,fun){ // jmat's version of requirejs
+	// if a url then just load it
+	// if a variable name that doesn't exist then load it with loadVar
+	// if the variable is found to exist then move on
+	if(typeof(lib)=='string'){lib=[lib]}
+	// check if this is a variable
+	var libfun=function(lib){
+		jmat.loadVar(lib[0],function(){
+			if(lib.length>1){
+				jmat.require(lib.slice(1),fun)
+			}
+			else{fun()} // have fun
+		})
+	}
+	if(!lib[0].match(/http[s]{0,1}:/)){ // it is a variable
+		if(typeof(window[lib[0]])=='undefined'){libfun(lib)} // load it only if it doesn't exist
+	}
+	else{libfun(lib)}
+},
+
 loadD3:function(callback){ // loads d3.js library
 	//jmat.load('http://mbostock.github.com/d3/d3.v2.js',callback);
 	jmat.load('d3.v2.min.js',callback);
@@ -685,18 +715,23 @@ loadVar:function(V,cb,er,cbId){ // check that an external library is loaded, V i
 			case 'CoffeeScript':
 				url = 'https://raw.github.com/jashkenas/coffee-script/master/extras/coffee-script.js';break;
 			case 'jQuery':
-				url='https://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js';break;
-			case 'jQueryUI':
+				url='https://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js';break;
+			case 'jQuery.ui':
 				if(typeof(jQuery)=="undefined"){ // check for jQuery dependency
 					url="";
 					jmat.loadVar('jQuery',function(){jmat.loadVar(V,cb,er,cbId)});
 				}
 				else{
-					url='https://ajax.googleapis.com/ajax/libs/jqueryui/1.9.1/jquery-ui.min.js';
+					url='https://ajax.googleapis.com/ajax/libs/jqueryui/1.10.0/jquery-ui.min.js';
+					// add css to head
+					lk = document.createElement('link');
+					lk.rel='stylesheet';
+					lk.href='http://ajax.googleapis.com/ajax/libs/jqueryui/1.10.0/themes/smoothness/jquery-ui.css';
+					document.head.appendChild(lk);
 				}
 				break;
 			case 'd3':
-				url='https://cdnjs.cloudflare.com/ajax/libs/d3/2.10.0/d3.v2.min.js';break;
+				url='https://cdnjs.cloudflare.com/ajax/libs/d3/3.0.1/d3.v3.min.js';break;
 			case 'google':
 				url='https://www.google.com/jsapi';break;
 			case 'minerva':
@@ -712,7 +747,8 @@ loadVar:function(V,cb,er,cbId){ // check that an external library is loaded, V i
 			case 'cBio':
 					url='https://dl.dropbox.com/s/x7yvewsh7xs1xtu/cBio.js?dl=1';break; // dev link
 			default :
-				throw('No library was found to assemble "'+V+'"');
+				if(!!V.match(/http[s]{0,1}:/)){url=V} // if it is a url
+				else{throw('No library was found to assemble "'+V+'"')};
 		}
 		if(url.length>0){
 			jmat.loadSync(url,cb,er);
@@ -1173,14 +1209,6 @@ revalSet:function(uid){ // set job for remote evaluation, task is the key of the
 	console.log(uid);
 },
 
-require:function(url){ // checking if I got the require mechanism correctly
-	jmat.load(url,function(){
-		4
-		}
-	)
-	4
-},
-
 revalGet:function(task){ //
 	4;
 },
@@ -1247,7 +1275,7 @@ s3db:{ // S3DB connectivity
 	},
 	
 	login:function(info,cb,id){ // builds on jmat.s3db.UI.login, if you want to do it quietly use id of hidden id
-		if(!cb){cb=function(){console.log("jmat.s3db.info.uri:",jmat.s3db.info.uri)}}
+		if(!cb){cb=function(){console.log("jmat.s3db.info.uid:",jmat.s3db.info.uid)}}
 		if(!info){ // this info argument is very flexible, see comments at jmat.s3db.UI.login 
 			this.UI.login(cb); // ask for them or pick them up from the URL
 		}
@@ -1258,7 +1286,7 @@ s3db:{ // S3DB connectivity
 			if(!info.login){
 				jmat.s3db.info.login=info;
 				// now get uid information
-				jmat.s3db.call(jmat.s3db.info.login.url+"/URI.php?key="+jmat.s3db.info.login.key,function(x){jmat.s3db.info.uri=x[0];cb()});
+				jmat.s3db.call(jmat.s3db.info.login.url+"/URI.php?key="+jmat.s3db.info.login.key,function(x){jmat.s3db.info.uid=x[0];cb()});
 			}
 			else{
 				this.info=info;
@@ -1390,6 +1418,30 @@ s3db:{ // S3DB connectivity
 				//console.log(url,cb);
 				return jmat.gId(id_url)
 			}
+		},
+		
+		tab:function(id,info){ // S3DB's tabulator
+			// check that jquery and jquery.ui are loaded
+			if(typeof(jQuery)=='undefined'){
+				jmat.loadVar('jQueryUI',function(){jmat.s3db.UI.couch(id,info)});
+			}
+			else{
+				if(typeof(jQuery.ui)=='undefined'){
+					jmat.loadVar('jQueryUI',function(){jmat.s3db.UI.couch(id,info)});
+				}
+				else{ // jQuery UI is garanteede to be available so this is where the UI happens
+					// check that the div id exists
+					console.log(4);
+					
+					
+				}				
+			}
+			
+			
+			if(!info){info=jmat.s3db.info} // current connection as default
+			// create div id 
+			
+			//
 		}
 	}
 },
@@ -1646,6 +1698,6 @@ zeros:function(){
 	return jmat.dimfun(function(){return 0},arguments)
 },
 
-webrwUrl:'http://165.225.128.64',
+webrwUrl:'https://webrw.herokuapp.com',//http://165.225.128.64',
 
 }
