@@ -62,7 +62,7 @@ callback:function(url,fun,success){ // jmat.callback('https://api.github.com/use
 		this.callback[funId]=function(x){delete jmat.callback[funId];return fun(x)};
 		this.load(url+'?callback=jmat.callback.'+funId,success);
 	}
-	else{this.load(url+'?callback='+fun,success)} // if fun is justthe function name	
+	else{this.load(url+'?callback='+fun,success)} // if fun is just the function name	
 },
 
 catArray:function(A){ // optimized for conCATenation of an array of numerically indexed arrays
@@ -609,7 +609,7 @@ load:function(url,cb,er){ // load script / JSON
 	if(!!cb){s.onload=cb}
 	if(!!er){s.onerror=er}
 	document.body.appendChild(s);
-	setTimeout('document.body.removeChild(document.getElementById("'+s.id+'"));',3000); // is the waiting still needed ?
+	setTimeout('document.body.removeChild(document.getElementById("'+s.id+'"));',30000); // is the waiting still needed ?
 	return s.id
 },
 
@@ -666,6 +666,7 @@ require:function(lib,fun){ // jmat's version of requirejs
 	// if a url then just load it
 	// if a variable name that doesn't exist then load it with loadVar
 	// if the variable is found to exist then move on
+	if(!fun){fun=function(){console.log('no fun required')}} // which is silly as it defaults to loadVar
 	if(typeof(lib)=='string'){lib=[lib]}
 	// check if this is a variable
 	var libfun=function(lib){
