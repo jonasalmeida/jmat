@@ -1444,6 +1444,21 @@ s3db:{ // S3DB connectivity
 			// create div id 
 			
 			//
+		},
+
+		wApp:function(id,url){
+			$('<div id="'+id+'_s3dbLogin">').appendTo($('#'+id));// create login div
+            var url = 'https://uab.s3db.org/s3db'
+            jmat.s3db.UI.login(
+                url,
+                function(){
+                    wApps.s3db=jmat.s3db.info;
+                    console.log('s3db login successful :-)');
+                    var html = '<h2>'+jmat.s3db.info.uid.uid+'</h2><p>'+jmat.s3db.info.uid.fullname+' ('+jmat.s3db.info.uid.email+'),<br> you successfully logged in with UID "'+jmat.s3db.info.uid.uid+'".';
+                    $('<div>Logged in at '+url+': <p><smal><em>'+html+'</em></small></p>').appendTo($('#'+id));
+                },
+                id+'_s3dbLogin'
+            )
 		}
 	}
 },
