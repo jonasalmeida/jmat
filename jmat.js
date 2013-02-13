@@ -267,7 +267,7 @@ div:function(id,html){
 		div = this.cEl('div');
 		div.id=id;
 		document.body.appendChild(div);
-	}
+	}else{div=this.gId(id)}
 	if(!!html){div.innerHTML=html};
 	return div
 },
