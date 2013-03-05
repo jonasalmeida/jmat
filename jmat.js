@@ -225,6 +225,29 @@ d3:{
 	
 },
 
+data:{
+	wappUI:function(id){ // UI for the wApps ecosystem
+		if(!id){id = jmat.uid()}; // if build target element doesn't exist, then create it
+		if(!document.getElementById('lala')){$('<div id="'+id+'">').appendTo(document.body);}
+		// now the target exists for sure
+		var div = $('#'+id);
+		var divDataInput = $('<div id="divDataInput">').appendTo(div);
+		var idTextArea = jmat.uid('inputTextArea');
+		var inputTextArea = $('<textarea id = "'+idTextArea+'" rows="10"></textarea><button id="inputTextAreaParse">Parse</button><br>').appendTo(divDataInput)
+		var inputDataFile = $('<input type="file" id="inputDataFile" multiple>').appendTo(divDataInput);
+		//inputDataFile.idTextArea=idTextArea;
+		inputDataFile.change(function(){
+			jmat.loadFiles(this.files,"readAsText",function(x){document.getElementById(idTextArea).value=x.result});});
+		$('#inputTextAreaParse').click(function(){jmat.data.parse(idTextArea)});
+	},
+
+	wksp:[], // workspace
+
+	parse:function(id){ // parsing text tab delimited data into a table (compatible with google fusion tables table template)
+		jmat.data.wksp.push(jmat.text2table(document.getElementById(id).value));
+	}
+},
+
 data2imData:function(data){ // the reverse of im2data, data is a matlabish set of 4 2d matrices, with the r, g, b and alpha values
 	var n=data.length, m=data[0].length;
 	//var imData = {width:m, height:n, data:[]};
@@ -635,7 +658,7 @@ loadFiles:function(files,readAs,callback){
 	//<input type="file" id="files" multiple onchange="jmat.loadFiles(this.files,'readAsText')"></input> //<-- example of button for reading text files
 	if(!readAs){readAs='readAsDataURL'} // default is to read as dataURL
 	for(var i=0;i<files.length;i++){
-		this.readFile(files[i],readAs)
+		this.readFile(files[i],readAs,callback)
 	}
 	return i
 },
@@ -716,7 +739,7 @@ loadVar:function(V,cb,er,cbId){ // check that an external library is loaded, V i
 			case 'CoffeeScript':
 				url = 'https://raw.github.com/jashkenas/coffee-script/master/extras/coffee-script.js';break;
 			case 'jQuery':
-				url='https://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js';break;
+				url='https://ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js';break;
 			case 'jQuery.ui':
 				if(typeof(jQuery)=="undefined"){ // check for jQuery dependency
 					url="";
@@ -962,7 +985,7 @@ plot:function(id,x,y,opt){
 		google.load('visualization', '1', {'callback':function(){jmat.plot(id,x,y,opt)}, 'packages':['corechart']})
 	}
 	else{
-		console.log('plot');
+		//console.log('plot');
 		var dt = jmat.transpose([x,y]);
 		dt.unshift(['x','y']);
 		var data = google.visualization.arrayToDataTable(dt);
@@ -1631,6 +1654,7 @@ textread:function(url,cb){
 },
 
 transpose:function (x){ // transposes 2D array
+	if(!Array.isArray(x[0])){x=[x]}  // in case x is a 1D Array
 	var y=[],n=x.length,m=x[0].length
 	for(var j=0;j<m;j++){
 		y[j]=[];
