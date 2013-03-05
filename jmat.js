@@ -1654,12 +1654,14 @@ textread:function(url,cb){
 },
 
 transpose:function (x){ // transposes 2D array
-	if(!Array.isArray(x[0])){x=[x]}  // in case x is a 1D Array
-	var y=[],n=x.length,m=x[0].length
-	for(var j=0;j<m;j++){
-		y[j]=[];
-		for(var i=0;i<n;i++){
-			y[j][i]=x[i][j];
+	if(!Array.isArray(x[0])){y=[x]}  // in case x is a 1D Array
+	else{
+		var y=[],n=x.length,m=x[0].length;
+		for(var j=0;j<m;j++){
+			y[j]=[];
+			for(var i=0;i<n;i++){
+				y[j][i]=x[i][j];
+			}
 		}
 	}
 	return y
