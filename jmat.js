@@ -457,7 +457,7 @@ get:function(key,callback,url){ // get content at url or key
 	var s=document.createElement('script');
 	s.id = uid;s.src=url;
 	document.body.appendChild(s);
-	setTimeout('document.body.removeChild(document.getElementById("'+uid+'"));delete jmat.get.jobs.'+uid+';',10000); // is the waiting still need ? script onload would be another possibility to delete it
+	setTimeout('document.body.removeChild(document.getElementById("'+uid+'"));delete jmat.get.jobs.'+uid+';',300000); // is the waiting still need ? script onload would be another possibility to delete it
 	return uid;
 },
 
