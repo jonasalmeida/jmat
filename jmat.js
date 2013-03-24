@@ -103,7 +103,7 @@ cloneVector:function(V){// fastar than cloneArray if your array only has one dim
 	return V.map(function(v){return v})
 },
 
-console:function(id){
+console:function(id,exec){ // note that a different interpreter "exec" can be defined
 	if(!id){id = 'jmatConsole'};
 	if(!jmat.gId(id)){
 		var div = document.createElement('div');
@@ -111,7 +111,35 @@ console:function(id){
 		document.body.appendChild(div);
 	}
 	// Now that we have a place to go lets populate it
-	div.innerHTML="..."; // start with a blank slate
+	div.innerHTML='<ol id="listCmd"><li id=consoleLine> > <input id="liveCmd"></li><ol>'; // start with a blank slate
+	var listCmd = jmat.gId("listCmd");
+	listCmd.reversed=true;
+	this.console.log=[]; // place to record history
+	this.console.i=0;
+	if(!exec){exec=jmat.exec};
+	jmat.css(id); // <-- CSS style set here
+	var cmd = function cmd(){
+		jmat.gId("liveCmd").onkeyup=function(evt){
+			if(evt.keyCode==13){ // if enter was pressed
+				var i = jmat.console.i;
+				//jmat.gId('consoleLine_'+i).innerHTML+='.';
+				var li = jmat.cEl('li');
+				li.id='cmd_'+i;
+				var cmd = jmat.gId('liveCmd').value;
+				li.innerHTML=cmd;
+				listCmd.insertBefore(li,listCmd.firstChild.nextSibling);
+				//listCmd.appendChild(li);
+				//console.log(jmat.gId('liveCmd').value);
+				jmat.console.log.push({
+					"cmd":cmd
+				})
+				exec(cmd);
+				jmat.css(li);
+				jmat.console.i+=1;
+			}
+		}
+	};
+	cmd();
 	return div;
 },
 
@@ -154,6 +182,44 @@ compress: function (uncompressed) { // Source: http://rosettacode.org/wiki/LZW_c
         }
         return result;
     },
+
+css:function(id,c){ // apply a jmat style to a specific DOM id
+	var x; // css target
+	if(!id){x=document.body}
+	else if(typeof(id)=="string"){x=jmat.gId(id)}
+	else{x=id}; // the actual element is being submitted
+	if(!c){
+		c={
+			'ol,input':{
+				color:"navy"
+			},
+			'input':{
+				color:"blue"
+			},
+			'table':{
+				color:"red"
+			},
+			'div':{
+				color:"green"
+			},
+			'table,ol,input,div':{
+				fontFamily:"verdana",
+				fontSize:12
+			}			
+		}
+	}
+	//var y = x.querySelectorAll('ol,li,div,table,input,span,p,hr')
+	var f = jmat.fieldnames(c);
+	f.forEach(function(fi){
+		var y = x.querySelectorAll(fi);
+		var s = jmat.fieldnames(c[fi]); // style fields for the specific fi selector
+		for(var i = 0 ; i < y.length ; i++){ // is is not an array, it is a #nodeList object
+		    s.forEach(function(si){
+				y[i].style[si]=c[fi][si];
+			})		
+		}
+	})
+},
 
 decompress: function (compressed) {
 	        "use strict";
@@ -233,10 +299,10 @@ data:{
 		var div = $('#'+id);
 		var divDataInput = $('<div id="divDataInput">').appendTo(div);
 		var idTextArea = jmat.uid('inputTextArea');
-		var inputTextArea = $('<textarea id = "'+idTextArea+'" rows="10"></textarea><button id="inputTextAreaParse">Parse</button><br>').appendTo(divDataInput)
-		var inputDataFile = $('<input type="file" id="inputDataFile" multiple>').appendTo(divDataInput);
+		var inputTextArea = $('<textarea id = "'+idTextArea+'" rows="10"></textarea><button id="inputTextAreaParse">Parse</button><br>Name data set:<input id="fileName"><br>').appendTo(divDataInput)
+		$('<p> You can paste text to text area above,<br>load text file from disk: <input type="file" id="inputDataFile" multiple><br>or load it from local storage is you saved it there before:<p>').appendTo(divDataInput);
 		//inputDataFile.idTextArea=idTextArea;
-		inputDataFile.change(function(){
+		$('#inputDataFile').change(function(){
 			jmat.loadFiles(this.files,"readAsText",function(x){document.getElementById(idTextArea).value=x.result});});
 		$('#inputTextAreaParse').click(function(){jmat.data.parse(idTextArea)});
 	},
@@ -280,9 +346,17 @@ dec2bin:function(x,n){
 	return b
 },
 
-disp:function(x){ // by default displays both in the console and in document.body
+disp:function disp(x,id){ // by default displays both in the console and in document.body
 	console.log(x);
-	document.body.innerHTML+='<br><span style="color:blue">'+x+'</span>';
+	//document.body.innerHTML+='<br><span style="color:blue">'+x+'</span>';
+	if(!!id){ // display it at element with given id
+		var d = jmat.cEl('div');
+		d.innerHTML= jmat.html(x);
+		var y = jmat.gId(id);
+		y.appendChild(d);
+		y.appendChild(jmat.cEl('hr'));
+		//jmat.gId(id).innerHTML+='<br>'+JSON.stringify(x)+'<hr>';
+	}
 },
 
 div:function(id,html){
@@ -321,6 +395,39 @@ dimfun:function(){ // first argument is the function, subsequent arguments speci
 	}
     else {z=fun()}
 	return z
+},
+
+exec:function (x){
+	if(x.length==0){console.log('cmd empty')} // if cmd string is empty
+	else if(x[0]=="!"){ // "system call" (i.e. javascript)
+		x = x.slice(1);
+		eval(x);
+	}
+	else{ //jscript
+		if(!jmat.console.wksp){ // create workspace if not there already
+			jmat.console.wksp={};
+			var jmatFieldnames = jmat.fieldnames(jmat);
+			jmatFieldnames.splice(jmatFieldnames.indexOf('console'),1); // not sure that this exclusion is needed
+			for(var jmatFieldnames_i in jmatFieldnames){
+				jmat.console.wksp[jmatFieldnames[jmatFieldnames_i]]=jmat[jmatFieldnames[jmatFieldnames_i]];
+			};
+		}
+		x = x.split('=');
+		if(x.length==1){x=['ans',x[0]]};// default results variable is ans
+		with(jmat.console.wksp){
+			jmat.console.wksp[x[0]]=eval(x[1]);
+			//now display it if the last character is not ;
+			if(!x[1].match(';$')){
+				jmat.disp(jmat.console.wksp[x[0]]);
+				jmat.disp(jmat.console.wksp[x[0]],'cmd_'+jmat.console.i)
+
+			}
+		}
+
+
+	}
+	//else if(){};
+	console.log('->'+x);
 },
 
 edge:function(M){//find edge in bidimensional binary matrix such as what is produced by im2bw
