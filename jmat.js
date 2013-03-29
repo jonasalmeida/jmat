@@ -111,7 +111,7 @@ console:function(id,exec){ // note that a different interpreter "exec" can be de
 		document.body.appendChild(div);
 	}
 	// Now that we have a place to go lets populate it
-	div.innerHTML='<ol id="listCmd"><li id=consoleLine> > <input id="liveCmd"></li><ol>'; // start with a blank slate
+	div.innerHTML='<ol id="listCmd"><li id="consoleLine"> <span style="color:blue">></span> <input id="liveCmd"></li><ol>'; // start with a blank slate
 	var listCmd = jmat.gId("listCmd");
 	listCmd.reversed=true;
 	this.console.log=[]; // place to record history
@@ -120,12 +120,14 @@ console:function(id,exec){ // note that a different interpreter "exec" can be de
 	jmat.css(id); // <-- CSS style set here
 	var cmd = function cmd(){
 		jmat.gId("liveCmd").onkeyup=function(evt){
+			var cmdLine=jmat.gId('liveCmd');
+			//console.log(evt.keyCode);
 			if(evt.keyCode==13){ // if enter was pressed
 				var i = jmat.console.i;
 				//jmat.gId('consoleLine_'+i).innerHTML+='.';
 				var li = jmat.cEl('li');
 				li.id='cmd_'+i;
-				var cmd = jmat.gId('liveCmd').value;
+				var cmd = cmdLine.value;
 				li.innerHTML=cmd;
 				listCmd.insertBefore(li,listCmd.firstChild.nextSibling);
 				//listCmd.appendChild(li);
@@ -135,11 +137,28 @@ console:function(id,exec){ // note that a different interpreter "exec" can be de
 				})
 				exec(cmd);
 				jmat.css(li);
+				jmat.console.i0=i;
 				jmat.console.i+=1;
+				cmdLine.value="";
 			}
+			else if(evt.keyCode==38){ // calling previous command
+				if(jmat.console.i0>=0){
+					cmdLine.value=jmat.console.log[jmat.console.i0].cmd;
+					jmat.console.i0-=1;
+				}
+			}
+			else if(evt.keyCode==40){ // calling next command
+				if(jmat.console.i0<jmat.console.i){
+					cmdLine.value=jmat.console.log[jmat.console.i0+1].cmd;
+					jmat.console.i0+=1;
+				}
+			}
+			// adapt line width to number of characters
+			cmdLine.size=jmat.max([jmat.min([20,cmdLine.size]),cmdLine.value.length]);
 		}
 	};
 	cmd();
+	jmat.gId("liveCmd").focus();
 	return div;
 },
 
@@ -194,7 +213,9 @@ css:function(id,c){ // apply a jmat style to a specific DOM id
 				color:"navy"
 			},
 			'input':{
-				color:"blue"
+				color:"blue",
+				border:"none",
+				backgroundColor:"yellow"
 			},
 			'table':{
 				color:"red"
@@ -347,7 +368,6 @@ dec2bin:function(x,n){
 },
 
 disp:function disp(x,id){ // by default displays both in the console and in document.body
-	console.log(x);
 	//document.body.innerHTML+='<br><span style="color:blue">'+x+'</span>';
 	if(!!id){ // display it at element with given id
 		var d = jmat.cEl('div');
@@ -357,6 +377,7 @@ disp:function disp(x,id){ // by default displays both in the console and in docu
 		y.appendChild(jmat.cEl('hr'));
 		//jmat.gId(id).innerHTML+='<br>'+JSON.stringify(x)+'<hr>';
 	}
+	else{console.log(x)}
 },
 
 div:function(id,html){
@@ -876,6 +897,8 @@ loadVar:function(V,cb,er,cbId){ // check that an external library is loaded, V i
 				url='http://js.s3db.googlecode.com/hg/translate/s3ql_translator.js';break;
 			case 'PUBNUB':
 					url='http://cdn.pubnub.com/pubnub-3.3.min.js';break;
+			case 'Peer':
+					url='http://cdn.peerjs.com/0/peer.min.js';break;
 			case 'cBio':
 					url='https://dl.dropbox.com/s/x7yvewsh7xs1xtu/cBio.js?dl=1';break; // dev link
 			default :
