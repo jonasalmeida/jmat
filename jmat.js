@@ -1003,6 +1003,36 @@ memb:function(x,dst){ // builds membership function
 	
 },
 
+mongo:{
+	url:NaN,
+	key:NaN,
+	connect:function(url,key){
+		if(!url){url=this.url}else{this.url=url}
+		if(!url){url=prompt('URL of mongodb service:','https://api.mongohq.com/');this.url=url} // mongohq as the default mongod service
+		if(!key){key=this.key}
+		if(!key){key=prompt('api key to '+url);this.key=key}
+		//var cmd = url+'databases?_apikey='+key+'&callback=console.log';
+		//console.log(cmd);
+		jmat.load(url+'databases?_apikey='+key+'&callback=console.log');
+		//console.log('connecting with mongod ...');
+		return 'connecting with mongod ...'
+	},
+	get:function(cmd,cb){
+		if(!cb){cb='console.log'};
+		if(!cmd){cmd='databases'};
+		if(typeof(cb)=='function'){
+			// add it to callbacks
+			var id=jmat.uid();
+			this.callbacks[id]=cb;
+			cb='jmat.mongo.callbacks.'+id;
+		}
+		jmat.load(this.url+cmd+'?_apikey='+this.key+'&callback='+cb);
+		setTimeout(function(){delete jmat.mongo.callbacks[cb]},100000) // delete atfer 100 secs
+		// for example jmat.mongo.get('databases/tcgaBoard/collections/patient',function(x){doSomething(x)})
+	},
+	callbacks:{},
+},
+
 not:function(x){ // negates Boolean value, or an array thereof
 	if(Array.isArray(x)){return x.map(function(xi){return jmat.not(xi)})}
 	else{return !x}
