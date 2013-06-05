@@ -1796,6 +1796,14 @@ table2html:function(t){  // table, table id, target element id
 	return h
 },
 
+table2docs:function(tb){ // convertes table structure into array of document structures
+	return tb.rows.map(function(r){
+		var d = {};  // individual document
+		tb.columns.forEach(function(c,i){d[c]=r[i]});
+		return d;
+	})
+},
+
 textread:function(url,cb){
 	console.log('reading '+url+' ...');
 	if(!cb){cb=function(x){console.log(x)}}
