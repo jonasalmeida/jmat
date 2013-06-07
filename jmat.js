@@ -1821,6 +1821,17 @@ textread:function(url,cb){
 	return xhr;
 },
 
+text2docs:function(txt){ // short cut for text-->table-->docs
+	return jmat.table2docs(jmat.text2table(txt));
+},
+
+urlread_text2doc:function(url,cb){ // reads tabular file from text and converts in onto an array of NoSQL document structures
+	if(!cb){cb=function(x){console.log(x)}}
+	jmat.urlread(url,function(x){
+		cb(jmat.text2docs(x));
+	});
+},
+
 transpose:function (x){ // transposes 2D array
 	if(!Array.isArray(x[0])){y=[x]}  // in case x is a 1D Array
 	else{
