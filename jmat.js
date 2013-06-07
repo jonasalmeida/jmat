@@ -1872,6 +1872,20 @@ unique:function(x){ // x is an Array
 	return u
 },
 
+urlread:function(url,cb){ // inspired by matlab's homonimous
+	if(!cb){cbk='console.log'};
+	if(typeof(cb)=='function'){ // record the callback as a job
+		if(!this.urlread.jobs){this.urlread.jobs=[]};
+		var jobId = jmat.uid();
+		this.urlread.jobs[jobId]=function(x){
+			cb(x.join('\n')); // note that array of lines are converted back to text
+			delete this[jobId]; // clean up
+		}
+		cbk='jmat.urlread.jobs.'+jobId;
+	}
+	this.load('https://webrw.herokuapp.com/?get='+url+'&callback='+cbk);
+},
+
 wait:function (t,V){ // horrible way to send time (in milliseconds) burning through CPU :-(
 	if(!V){V=jmat.uid()}
 
