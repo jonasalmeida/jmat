@@ -660,6 +660,7 @@ imhalve:function(dt0,PSmax){ // poor man's version of imresize, it halves an ima
 },
 
 imwrite:function(cv,im,dx,dy){
+	if(!cv){cv = document.createElement('canvas');document.body.appendChild(cv)};
 	if(!dy){dx=0;dy=0} // default location
 	if(typeof(cv)=='string'){cv=jmat.gId(cv)} //cv can also be the id of a canvas element
 	if(!im.data){im=jmat.data2imData(im)} // such that im can also be the matrix created by imread
