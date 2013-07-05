@@ -1872,7 +1872,8 @@ uid:function(prefix){
 	return uid
 },
 
-unique:function(x){ // x is an Array
+unique:function(x){ // x should be an Array
+	if(typeof(x)=='string'){x=x.split('')}; // if it is a string, break it into an array of its characters
 	var u = []; // store unique here
 	u[0]=x[0];
 	for (var i=1; i<x.length; i++){
@@ -1881,7 +1882,7 @@ unique:function(x){ // x is an Array
 			u[u.length]=x[i];
 		}
 	}
-	return u
+	return u;
 },
 
 urlread:function(url,cb){ // inspired by matlab's homonimous
