@@ -1892,7 +1892,9 @@ urlread:function(url,cb){ // inspired by matlab's homonimous
 		var jobId = jmat.uid();
 		this.urlread.jobs[jobId]=function(x){
 			cb(x.join('\n')); // note that array of lines are converted back to text
-			delete this[jobId]; // clean up
+			var that=this;
+			setTimeout(function(){delete that[jobId]},10000); // give it 10 secs to finish, just in case
+			//delete this[jobId]; // clean up
 		}
 		cbk='jmat.urlread.jobs.'+jobId;
 	}
