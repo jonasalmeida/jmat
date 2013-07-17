@@ -75,6 +75,19 @@ catArray:function(A){ // optimized for conCATenation of an array of numerically 
 	return JSON.parse(Astr.slice(0,Astr.length-1)+']');
 },
 
+catOpen:function(x){ // goes through all elements of an array and pushes contents of all elements that are arrays into a single array
+	var y=[];
+	jmat.arrayfun(x,function(xi){
+		if(Array.isArray(xi)){
+			jmat.arrayfun(xi,function(a){y.push(a)})
+		}
+		else{
+			y.push(xi);
+		}
+	})
+	return y;
+},
+
 cEl:function(x,id){
 	x = document.createElement(x);
 	if(id){x.id=id}
