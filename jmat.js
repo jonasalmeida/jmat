@@ -326,20 +326,24 @@ d3:{
 },
 
 data:{
-	wappUI:function(id){ // UI for the wApps ecosystem
-		if(!id){id = jmat.uid()}; // if build target element doesn't exist, then create it
-		if(!document.getElementById('lala')){$('<div id="'+id+'">').appendTo(document.body);}
-		// now the target exists for sure
-		var div = $('#'+id);
-		var divDataInput = $('<div id="divDataInput">').appendTo(div);
-		var idTextArea = jmat.uid('inputTextArea');
-		var inputTextArea = $('<textarea id = "'+idTextArea+'" rows="10"></textarea><button id="inputTextAreaParse">Parse</button><br>Name data set:<input id="fileName"><br>').appendTo(divDataInput)
-		$('<p> You can paste text to text area above,<br>load text file from disk: <input type="file" id="inputDataFile" multiple><br>or load it from local storage is you saved it there before:<p>').appendTo(divDataInput);
-		//inputDataFile.idTextArea=idTextArea;
-		$('#inputDataFile').change(function(){
-			jmat.loadFiles(this.files,"readAsText",function(x){document.getElementById(idTextArea).value=x.result});});
-		$('#inputTextAreaParse').click(function(){jmat.data.parse(idTextArea)});
-	},
+	wappUI:function(id){jmat.loadVar('jQuery',function(id){
+        (function(id){ // UI for the wApps ecosystem
+		    if(typeof(undefined)!='string'){id = jmat.uid()}; // if build target element doesn't exist, then create it
+		    if(!document.getElementById('lala')){jQuery('<div id="'+id+'">').appendTo(document.body);}
+		    // now the target exists for sure
+		    var div = jQuery('#'+id);
+		    var divDataInput = jQuery('<div id="divDataInput">').appendTo(div);
+		    var idTextArea = jmat.uid('inputTextArea');
+		    var inputTextArea = jQuery('<textarea id = "'+idTextArea+'" rows="10"></textarea><button id="inputTextAreaParse">Parse</button><br>Name data set:<input id="fileName"><br>').appendTo(divDataInput)
+		    jQuery('<p> You can paste text to text area above,<br>load text file from disk: <input type="file" id="inputDataFile" multiple><br>or load it from local storage is you saved it there before:<p>').appendTo(divDataInput);
+		    //inputDataFile.idTextArea=idTextArea;
+		    jQuery('#inputDataFile').change(function(){
+			    jmat.loadFiles(this.files,"readAsText",function(x){document.getElementById(idTextArea).value=x.result});});
+		    jQuery('#inputTextAreaParse').click(function(){jmat.data.parse(idTextArea)});
+	    })(id);
+    }
+    )}
+    ,
 
 	wksp:[], // workspace
 
@@ -981,6 +985,27 @@ max:function(x){ //return maximum value of array
 	if(Array.isArray(x[0])){return x.map(function(xi){return jmat.max(xi)})}
 	else{return x.reduce(function(a,b){if(a>b){return a}else{return b}})};
 	//return x.reduce(function(a,b){if(a>b){return a}else{return b}})
+},
+
+mapQreduce:function(x,mfun,rfun){ // using jQuery deferred execution to support memory efficient mapReduce
+    var Q=[]; // queue  
+    var reduceQ=function(val){ // run the reduce function as the queue is being filled
+        Q.push(val);
+        var n = Q.length;
+        if(n>1){ // we need at least 2 values
+            //console.log(Q); // queue before reduction
+            var r = rfun(Q[n-2],Q[n-1]); // reduce last two values
+            Q.splice(-2); // take those 2 out of the Q
+            Q.push(r); // push reduced result to the end of teh queue
+            //console.log(Q); // queue after reduction
+        }
+    }
+    x.map(function(xi){
+        var d = new $.Deferred();
+        d.done(reduceQ); 
+        d.resolve(mfun(xi));
+    })
+    return Q[0];
 },
 
 max2:function(x){ // returns maximum value of array and its index, i.e.  [max,i]
@@ -1644,7 +1669,7 @@ s3db:{ // S3DB connectivity
 		},
 
 		wApp:function(id,url){
-			$('<div id="'+id+'_s3dbLogin">').appendTo($('#'+id));// create login div
+			jQuery('<div id="'+id+'_s3dbLogin">').appendTo(jQuery('#'+id));// create login div
             var url = 'https://uab.s3db.org/s3db'
             jmat.s3db.UI.login(
                 url,
@@ -1652,7 +1677,7 @@ s3db:{ // S3DB connectivity
                     wApps.s3db=jmat.s3db.info;
                     console.log('s3db login successful :-)');
                     var html = '<h2>'+jmat.s3db.info.uid.uid+'</h2><p>'+jmat.s3db.info.uid.fullname+' ('+jmat.s3db.info.uid.email+'),<br> you successfully logged in with UID "'+jmat.s3db.info.uid.uid+'".';
-                    $('<div>Logged in at '+url+': <p><smal><em>'+html+'</em></small></p>').appendTo($('#'+id));
+                    jQuery('<div>Logged in at '+url+': <p><smal><em>'+html+'</em></small></p>').appendTo(jQuery('#'+id));
                 },
                 id+'_s3dbLogin'
             )
