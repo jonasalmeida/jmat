@@ -94,6 +94,17 @@ cEl:function(x,id){
 	return x
 },
 
+char:function(num){
+	if(typeof(num)=='number'){num=[num]};
+	var str = '';
+	num.map(
+		function(c,i){
+			str+=String.fromCharCode(c)
+		}
+	)
+	return str;
+},
+
 class:function(x){
 	if(!x.constructor){return null}
 	else{return x.constructor.name}
@@ -1075,6 +1086,11 @@ mongo:{
 not:function(x){ // negates Boolean value, or an array thereof
 	if(Array.isArray(x)){return x.map(function(xi){return jmat.not(xi)})}
 	else{return !x}
+},
+
+num2str:function(num){
+	if(typeof(num)=='number'){num=[num]};
+	return num.toString().replace(/\,/g,'\t');
 },
 
 ones:function(){
