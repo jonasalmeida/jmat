@@ -1755,11 +1755,43 @@ SInt:function(x){// read signed n byte integer (x is a n element array)
 	return y
 },
 
-SIntN:function(x,n){ // version of SInt for an array with a fixed signed byte resolution
+SIntN:function(x,n){ // version of SInt for an array with a fixed signed 8xn byte resolution
 	if(!n){n=1};
 	var y = [];
 	for (var i=0;i<x.length;i+=n){
-		y.push(this.SInt(x.slice(i,i+n)));
+		y.push(jmat.SInt(x.slice(i,i+n)));
+	}
+	return y
+},
+
+UInt8:function(x){// read unsigned 8 bit integer
+	var str=jmat.dec2bin(x);
+	var n=str.length;
+	if(n>8){str=str.slice(n-8)};
+	if(n<8){str="00000000".slice(0,8-n)+str};	
+	var y = jmat.bin2dec(str);
+	return y
+},
+
+UInt:function(x){// read unsigned n byte integer (x is a n element array)
+	var n = x.length;
+	x = x.map(function(xi){
+		var stri=jmat.dec2bin(xi);
+		var n=stri.length;
+		if(n>8){stri=stri.slice(n-8)};
+		if(n<8){stri="00000000".slice(0,8-n)+stri};
+		return stri;
+	});
+	var str=x.join().replace(/\,/g,'');
+	var y = jmat.bin2dec(str);
+	return y
+},
+
+UIntN:function(x,n){ // version of UInt for an array with a fixed signed 8xn byte resolution
+	if(!n){n=1};
+	var y = [];
+	for (var i=0;i<x.length;i+=n){
+		y.push(jmat.UInt(x.slice(i,i+n)));
 	}
 	return y
 },
