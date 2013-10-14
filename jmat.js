@@ -1730,6 +1730,40 @@ shorten:function(x,n){ // shortens numbers or strings
 	}
 },
 
+SInt8:function(x){// read signed 8 bit integer
+	var str=jmat.dec2bin(x);
+	var n=str.length;
+	if(n>8){str=str.slice(n-8)};
+	if(n<8){str="00000000".slice(0,8-n)+str};	
+	var y = jmat.bin2dec(str.slice(1));
+	if(str[0]=="1"){y=-y};
+	return y
+},
+
+SIntN:function(x){// read signed N byte integer (x is a N element array)
+	var n = x.length;
+	x = x.map(function(xi){
+		var stri=jmat.dec2bin(xi);
+		var n=stri.length;
+		if(n>8){stri=stri.slice(n-8)};
+		if(n<8){stri="00000000".slice(0,8-n)+stri};
+		return stri;
+	});
+	var str=x.join().replace(/\,/g,'');
+	var y = jmat.bin2dec(str.slice(1));
+	if(str[0]=="1"){y=-y};
+	return y
+},
+
+SInt:function(x,n){ // version of SIntN for an array
+	if(!n){n=1};
+	var y = [];
+	for (var i=0;i<x.length;i+=n){
+		y.push(this.SIntN(x.slice(i,i+n)));
+	}
+	return y
+},
+
 size:function(x){
 	var L=function(y){
 		s[s.length]=y.length;
