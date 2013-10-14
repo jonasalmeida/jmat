@@ -1740,7 +1740,7 @@ SInt8:function(x){// read signed 8 bit integer
 	return y
 },
 
-SIntN:function(x){// read signed N byte integer (x is a N element array)
+SInt:function(x){// read signed n byte integer (x is a n element array)
 	var n = x.length;
 	x = x.map(function(xi){
 		var stri=jmat.dec2bin(xi);
@@ -1755,11 +1755,11 @@ SIntN:function(x){// read signed N byte integer (x is a N element array)
 	return y
 },
 
-SInt:function(x,n){ // version of SIntN for an array
+SIntN:function(x,n){ // version of SInt for an array with a fixed signed byte resolution
 	if(!n){n=1};
 	var y = [];
 	for (var i=0;i<x.length;i+=n){
-		y.push(this.SIntN(x.slice(i,i+n)));
+		y.push(this.SInt(x.slice(i,i+n)));
 	}
 	return y
 },
