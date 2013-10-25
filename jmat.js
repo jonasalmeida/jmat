@@ -46,7 +46,10 @@ array2table:function(a){ // determines unique entries and builds a table with co
 
 bin2dec:function(x){
 	var n=x.length;
-	return x.split('').map(function(xi,i){return xi*Math.pow(2,n-i-1)}).reduce(function(a,b){return a+b});
+	if(n==0){return NaN}
+	else{
+		return x.split('').map(function(xi,i){return xi*Math.pow(2,n-i-1)}).reduce(function(a,b){return a+b});
+	}
 },
 
 cat:function(x,y){ // cat will work for matrices and objects
@@ -337,30 +340,54 @@ d3:{
 },
 
 data:{
-	wappUI:function(id){jmat.loadVar('jQuery',function(id){
-        (function(id){ // UI for the wApps ecosystem
-		    if(typeof(undefined)!='string'){id = jmat.uid()}; // if build target element doesn't exist, then create it
-		    if(!document.getElementById('lala')){jQuery('<div id="'+id+'">').appendTo(document.body);}
-		    // now the target exists for sure
-		    var div = jQuery('#'+id);
-		    var divDataInput = jQuery('<div id="divDataInput">').appendTo(div);
-		    var idTextArea = jmat.uid('inputTextArea');
-		    var inputTextArea = jQuery('<textarea id = "'+idTextArea+'" rows="10"></textarea><button id="inputTextAreaParse">Parse</button><br>Name data set:<input id="fileName"><br>').appendTo(divDataInput)
-		    jQuery('<p> You can paste text to text area above,<br>load text file from disk: <input type="file" id="inputDataFile" multiple><br>or load it from local storage is you saved it there before:<p>').appendTo(divDataInput);
-		    //inputDataFile.idTextArea=idTextArea;
-		    jQuery('#inputDataFile').change(function(){
-			    jmat.loadFiles(this.files,"readAsText",function(x){document.getElementById(idTextArea).value=x.result});});
-		    jQuery('#inputTextAreaParse').click(function(){jmat.data.parse(idTextArea)});
-	    })(id);
-    }
-    )}
-    ,
+	buildUI:function(id){
+		if(!id){id = jmat.uid('dataUI')}; // if id doesn't exist, create one
+		jmat.data.buildUI.id=id;
+		jmat.require('jQuery',
+			function(){
+				id=jmat.data.buildUI.id;
+		    	if(!document.getElementById(id)){jQuery('<div id="'+id+'">').appendTo(document.body);}
+			    // now the target exists for sure
+			    var div = jQuery('#'+id);
+			    var divDataInput = jQuery('<div id="divDataInput">').appendTo(div);
+			    var idTextArea = jmat.uid('inputTextArea');
+			    var inputTextArea = jQuery('<textarea id = "'+idTextArea+'" rows="10"></textarea><button id="inputTextAreaParse">Parse</button><br>Name data set:<input id="fileName"><br>').appendTo(divDataInput)
+			    jQuery('<p> You can paste text to text area above,<br>load text file from disk: <input type="file" id="inputDataFile" multiple><br><input id="jmatDataDropIn" type="dropbox-chooser" name="selected-file" style="visibility: hidden;"/><br>or load it from local storage is you saved it there before:<br>[under development]<p>').appendTo(divDataInput);
+		    	//inputDataFile.idTextArea=idTextArea;
+			    jQuery('#inputDataFile').change(function(){
+				    jmat.loadFiles(this.files,"readAsText",function(x){document.getElementById(idTextArea).value=x.result});
+				});
+			    jQuery('#inputTextAreaParse').click(function(){jmat.data.parse(idTextArea)});
+				
+				// DropIn 
+				var drpBox = document.getElementById("jmatDataDropIn");
+				drpBox.idTextArea=idTextArea;
+				drpBox.addEventListener("DbxChooserSuccess", function(evt) {
+        			var fname = evt.files[0].name;
+            		var reader = function(txt) {
+                		document.getElementById(this.idTextArea).value=txt;
+            		};
+            		jQuery.get(evt.files[0].link, reader)
+				});
+				// dropIn script
+				var sp = document.createElement('script');
+    			sp.type = 'text/javascript';
+    			sp.src = 'https://www.dropbox.com/static/api/1/dropins.js';
+    			sp.id = 'dropboxjs';
+    			sp.setAttribute('data-app-key', '8whwijxgl8iic3j');
+    			//document.body.appendChild(sp);
+    			setTimeout(function() {
+    			    document.head.appendChild(sp)
+    			}, 1000);
+    		}
+    	)
+	},
 
 	wksp:[], // workspace
 
 	parse:function(id){ // parsing text tab delimited data into a table (compatible with google fusion tables table template)
 		jmat.data.wksp.push(jmat.text2table(document.getElementById(id).value));
-	}
+	} // change this function to some other parser is needed
 },
 
 data2imData:function(data){ // the reverse of im2data, data is a matlabish set of 4 2d matrices, with the r, g, b and alpha values
@@ -392,6 +419,7 @@ dec2bin:function(x,n){
 		if(x>=m){b=b+'1';x=x-m}
 		else{b=b+'0'}
 	};
+	if(b.length==0){b="0"}
 	return b
 },
 
@@ -859,6 +887,12 @@ require:function(lib,fun){ // jmat's version of requirejs
 	}
 	if(!lib[0].match(/http[s]{0,1}:/)){ // it is a variable
 		if(typeof(window[lib[0]])=='undefined'){libfun(lib)} // load it only if it doesn't exist
+		else{
+			if(lib.length>1){
+				jmat.require(lib.slice(1),fun)
+			}
+			else{fun()} // have fun
+		}
 	}
 	else{libfun(lib)}
 },
