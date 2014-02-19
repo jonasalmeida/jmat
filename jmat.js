@@ -549,6 +549,15 @@ extractSegs:function(bw){ // extracts segmented features from a [0,1] matrix and
 	return segFeatures.map(function(si){return jmat.transpose(si)})
 },
 
+extProduct:function(m,v){ // mapreduced external product of a matrix by a vector
+	return m.map(function(mi){
+		return mi.map(function(mii,i){
+			return mii*v[i]}).reduce(function(a,b){
+				return a+b})
+		}
+	)
+},
+
 fieldnames:function(x){
 	y=[];i=0;
 	for(var f in x){
