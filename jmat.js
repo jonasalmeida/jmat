@@ -813,6 +813,19 @@ innerfun:function(x,y,fun){ // inner operations between two arrays
 	}
 },
 
+inputFileTxt:function(fun){ // input file for processing
+	if(!fun){fun=function(x){console.log(x.result)}};
+	// here's another interresting fun, for a stringified JSON text file:
+	// fun function(x){y=JSON.parse(x.result);console.log(y)}
+	var id=jmat.uid();
+	var div = jmat.div(id);
+	div.fun=fun;
+	var inId = 'input_'+id; console.log(inId);
+	div.innerHTML='<input type="file" id="'+inId+'" multiple onchange="jmat.loadFiles(this.files,\'readAsText\',this.parentNode.fun)"></input>';
+	// document.getElementById(inId).click(); // why doesn't this work?
+	return div;
+},
+
 length:function(x){ // js Array.length returns highest index, not always the numerical length
 	var n=0
 	for(var i in x){n++};
