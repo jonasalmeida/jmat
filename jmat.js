@@ -1913,6 +1913,21 @@ switch (y){
 return y;
 },
 
+text2object:function(txt,s){
+	if(!s){s='\t'} // tab-delimited, for cdv use s=','
+	txt = txt.split('\n').map(function(x){return x.split(s)});
+	var n=txt.length, m=txt[0].length, f=[]
+	var y={};
+	for (var j in txt[0]){
+		f[j]=txt[0][j]; // field name is in the first (i=0) row
+		y[f[j]]=[];
+		for (var i = 1 ; i<n ; i++){
+			y[f[j]][i-1]=txt[i][j];
+		}
+	}
+	return y;
+},
+
 text2table:function(txt){ // parse \n + \t text with col and row ids to a table structure
 	txt = txt.split('\n'); // parse the rows 
 	if(txt[txt.length-1].length==0){txt = txt.slice(0,txt.length-1)};
