@@ -813,15 +813,20 @@ innerfun:function(x,y,fun){ // inner operations between two arrays
 	}
 },
 
-inputFileTxt:function(fun){ // input file for processing
+inputFileTxt:function(fun,div,msg,attr){ // input file for processing
+	// fun function will process file text div is the hosting element, 
+	// msg is a note next to teh button, attr is a string inserted as <input> attribute
+	// example: jmat.inputFileTxt(false,false,'.csv only','accept=".csv"')
 	if(!fun){fun=function(x){console.log(x.result)}};
+	if(!msg){msg=''};
+	if(!attr){attr=''};
 	// here's another interresting fun, for a stringified JSON text file:
 	// fun function(x){y=JSON.parse(x.result);console.log(y)}
 	var id=jmat.uid();
-	var div = jmat.div(id);
+	if(!div){div = jmat.div(id)}
 	div.fun=fun;
 	var inId = 'input_'+id; console.log(inId);
-	div.innerHTML='<input type="file" id="'+inId+'" multiple onchange="jmat.loadFiles(this.files,\'readAsText\',this.parentNode.fun)"></input>';
+	div.innerHTML='<input type="file" id="'+inId+'" multiple onchange="jmat.loadFiles(this.files,\'readAsText\',this.parentNode.fun)" '+attr+'>'+msg+'</input>';
 	// document.getElementById(inId).click(); // why doesn't this work?
 	return div;
 },
