@@ -825,7 +825,7 @@ inputFileTxt:function(fun,div,msg,attr){ // input file for processing
 	var id=jmat.uid();
 	if(!div){div = jmat.div(id)}
 	div.fun=fun;
-	var inId = 'input_'+id; console.log(inId);
+	var inId = 'input_'+id; // console.log(inId);
 	div.innerHTML='<input type="file" id="'+inId+'" multiple onchange="jmat.loadFiles(this.files,\'readAsText\',this.parentNode.fun)" '+attr+'>'+msg+'</input>';
 	// document.getElementById(inId).click(); // why doesn't this work?
 	return div;
