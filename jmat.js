@@ -880,6 +880,38 @@ loadGoogleCoreChart:function(cb){ // load Google corechart visualization
 	jmat.loadVar('google',function(){google.load('visualization', '1', {'callback':cb, 'packages':['corechart']})});
 },
 
+openUrl : function(url,op){
+	switch(op){
+	case undefined:
+		this.openUrl(url,2)
+		break; // move on
+	case 1: // open in a new window
+		window.open(url);
+		break;
+	case 2: // open in new iframe 
+		jmat.openUrl(url,this.uid());
+		break;
+	default: // treating op as the parent DOM element or as div.id
+		if(typeof(op)=="object"){var parentEl = op}
+		else { // op is the id of the parent DOM element
+			var parentEl = document.getElementById(op);
+			if(!parentEl){ // if not found create it and drop it in the body
+				var parentEl = document.createElement('div');
+				document.body.appendChild(parentEl);
+			}
+		}
+		var div = document.createElement('div')
+		div.id=this.uid();
+		//div.innerHTML='<a href="'+url+'" target=_blank>Open</a> in new window; <button style="color:red" onclick="jmat.removeEl(\''+div.id+'\')">Remove</button>';
+		div.innerHTML='<button onclick="window.open(\''+url+'\');" style="color:blue">Open</button> in new window; <button style="color:red" onclick="jmat.rEl(\''+div.id+'\')">Remove</button>';
+		parentEl.appendChild(div);
+		var ifr = document.createElement('iframe');
+		div.appendChild(ifr);ifr.width="100%";ifr.height="100%";
+		ifr.src=url;
+	}
+	return false;
+},
+
 readFile:function(f,readAs,callback){
 	var that = this;
 	if(!callback){callback=function(x){ // DEAFAULT CALLBACK - you may want to write your own
