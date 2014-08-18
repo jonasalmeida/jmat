@@ -741,6 +741,14 @@ image:function(cv,im,dx,dy){ // for consistency
 imagesc:function(cv,dt,cm,fun,M){ // scales values to use full range of values. cv is the canvas, dt the data, and cm the colormap
 	if(!cm){cm=jmat.colormap()}
 	if(!fun){fun=function(){return 1}}; // opaque function
+	if(typeof(cv)=="string"){
+		var id=cv;
+		cv = document.createElement('canvas');
+		cv.id=id;
+		var nm=jmat.size(dt);
+		cv.height=nm[0];cv.width=nm[1];
+		document.body.appendChild(cv);
+	}
 	cm = jmat.transpose(cm); // to get one vector per channel
 	var n = cm[0].length-1; // should be 64-1=63
 	var I = jmat.dimfun(function(i){return i/(n)},n+1); // 64 numbers evenly spaced between 0 and 1
