@@ -1808,6 +1808,22 @@ save:function(varValue,varName){//save variable in the localHost, for example, s
 	return varName;
 },
 
+saveFile:function(x,fileName) { // x is the content of the file
+	// var bb = new Blob([x], {type: 'application/octet-binary'});
+	// see also https://github.com/eligrey/FileSaver.js
+	var bb = new Blob([x]);
+   	var url = URL.createObjectURL(bb);
+	var a = document.createElement('a');
+   	a.href=url;
+	if (fileName){
+		if(typeof(fileName)=="string"){ // otherwise this is just a boolean toggle or something of the sort
+			a.download=fileName;
+		}
+		a.click() // then download it automatically 
+	} 
+	return a
+},
+
 set:function(val,callback,key,url){ // set key-val pairs in the webrw endpoint, calback will have the key as its argument
 	if (!callback){callback=function(x){console.log(x)}};
 	if (typeof(val)!='string'){this.stringify(val)};
