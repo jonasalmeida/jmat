@@ -1140,18 +1140,17 @@ min2:function(x){ // returns maximum value of array and its index, i.e.  [max,i]
 
 memb:function(x,dst){ // builds membership function
 	var n = x.length-1;
-	if(!dst){
+	if(!dst){ // if no empirical distribution provided then create one and return it
 		dst = this.sort(x);
-		Ind=dst[1];
+		var Ind=dst[1];
 		dst[1]=dst[1].map(function(z,i){return i/(n)});
 		var y = x.map(function(z,i){return dst[1][Ind[i]]});
 		return dst;
 	}
-	else{ // interpolate y from distributions, dst
+	else{ // interpolate y from empirical distribution, dst
 		var y = this.interp1(dst[0],dst[1],x);
 		return y;
 	}
-	
 },
 
 mongo:{
