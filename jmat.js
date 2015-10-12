@@ -130,6 +130,60 @@ cloneVector:function(V){// fastar than cloneArray if your array only has one dim
 	return V.map(function(v){return v})
 },
 
+cluster:function(M0){
+	var M = JSON.parse(JSON.stringify(M0)) // clone
+	var n = M0.length
+	var max=jmat.max(jmat.max(M))*10 // to score then out of the diagonal
+	// clear diagonals
+	M.forEach(function(Mi,i){
+		M[i][i]=max // diagonal scored out
+	})
+	// amalgamate
+	var as=[] // amalgamation scheme
+	var ind=jmat.range(0,M.length-1)
+	//for(var i=0;i<M.length;i++){
+	//	as.push([M[i,i],[i]])
+	//}
+	// remove diagonals
+	
+	for(var k=0;k<n-1;k++){
+		// find most similar
+		as.push(jmat.min2(M))
+		var ij=as.slice(-1)[0][1] // coordinates of min
+		var i = jmat.min(ij), j=jmat.max(ij)
+		// update indexes
+		ind.push([ind[i],ind[j]])
+		ind.splice(j,1);ind.splice(i,1);
+		// add new line and column with values for new amagamayion
+		var nCol=[]
+		for(var r=0;r<M.length;r++){
+			nCol[r]=jmat.mean([M[i][r],M[j][r]]) // new column
+			M[r][M.length]=nCol[r] // new row
+		}
+		nCol.push(max) // new diagonal
+		M.push(nCol)
+		// remove lines and columns from M
+		M.splice(j,1);M.splice(i,1);
+		M=M.map(function(m){
+			m.splice(j,1);m.splice(i,1);
+			return m
+		})
+		
+	}
+
+	ind=JSON.parse('['+JSON.stringify(ind).replace(/[\[\]]/g,'')+']')
+
+	Mind=jmat.zeros(n,n)
+	for(var i=0;i<n;i++){
+		for(var j=0;j<n;j++){
+			Mind[i][j]=M0[ind[i]][ind[j]]
+		}
+	}
+
+	return [ind,Mind]
+
+},
+
 console:function(id,exec){ // note that a different interpreter "exec" can be defined
 	if(!id){id = 'jmatConsole'};
 	if(!jmat.gId(id)){
@@ -228,6 +282,32 @@ compress: function (uncompressed) { // Source: http://rosettacode.org/wiki/LZW_c
         }
         return result;
     },
+
+cov:function(x,y){
+	var meanX = jmat.mean(x), meanY = jmat.mean(y)
+	return jmat.mean(x.map(function(xi,i){
+		return (xi-meanX)*(y[i]-meanY)
+	}))
+},
+
+corr:function(x,y){
+	if(Array.isArray(x[0])){
+		return x.map(function(xi,i){
+			return jmat.corr(xi,y[i])
+		})
+	}else{
+		return jmat.cov(x,y)/((jmat.var(x)+jmat.var(y))/2)
+	}
+},
+
+crosstab:function(xx,fun){ // cross-tabulate distances between vectors in xx
+	if(!fun){fun=function(x,y){return 1-jmat.corr(x,y)}} // default is simetrical Pearson correlation
+	return xx.map(function(xi,i){
+		return xx.map(function(xj,j){
+			return fun(xi,xj)
+		})
+	})
+},
 
 css:function(id,c){ // apply a jmat style to a specific DOM id
 	var x; // css target
@@ -1135,22 +1215,34 @@ min:function(x){ //return maximum value of array
 },
 
 min2:function(x){ // returns maximum value of array and its index, i.e.  [max,i]
-	return x.map(function(xi,i){return [xi,i]}).reduce(function(a,b){if(a[0]<b[0]){return a}else{return b}})
+	if(Array.isArray(x[0])){ // coded only up to 2 dimensions
+		var xx = jmat.transpose(x.map(function(xi){return jmat.min2(xi)}))
+		var y = jmat.min2(xx[0]);
+		return [y[0],[y[1],xx[1][y[1]]]];
+	}
+	else{return x.map(function(xi,i){return [xi,i]}).reduce(function(a,b){if(a[0]<b[0]){return a}else{return b}})};
+},
+
+mean:function (x){
+	if(Array.isArray(x[0])){
+		return x.map(function(xi){return jmat.mean(xi)})
+	}else{return jmat.sum(x)/x.length}
 },
 
 memb:function(x,dst){ // builds membership function
 	var n = x.length-1;
-	if(!dst){ // if no empirical distribution provided then create one and return it
+	if(!dst){
 		dst = this.sort(x);
-		var Ind=dst[1];
+		Ind=dst[1];
 		dst[1]=dst[1].map(function(z,i){return i/(n)});
 		var y = x.map(function(z,i){return dst[1][Ind[i]]});
 		return dst;
 	}
-	else{ // interpolate y from empirical distribution, dst
+	else{ // interpolate y from distributions, dst
 		var y = this.interp1(dst[0],dst[1],x);
 		return y;
 	}
+	
 },
 
 mongo:{
@@ -1927,6 +2019,10 @@ sort:function(x){ // [y,I]=sort(x), where y is the sorted array and I contains t
 	return this.transpose(x)
 },
 
+spearman:function(x,y){
+	return jmat.corr(jmat.sort(x)[1],jmat.sort(y)[1])
+},
+
 sum:function(x){
 	if(Array.isArray(x[0])){return x.map(function(xi){return jmat.sum(xi)})}
 	else{return x.reduce(function(a,b){return a+b})};
@@ -2150,6 +2246,19 @@ urlread:function(url,cb){ // inspired by matlab's homonimous
 		cbk='jmat.urlread.jobs.'+jobId;
 	}
 	this.load('https://webrw.herokuapp.com/?get='+url+'&callback='+cbk);
+},
+
+var:function(x){ // variance
+	if(Array.isArray(x[0])){
+		return x.map(function(xi){
+			return jmat.var(xi)
+		})
+	}else{
+		var m = jmat.mean(x)
+		return jmat.mean(x.map(function(xi){
+			return Math.pow(xi-m,2)
+		}))
+	}
 },
 
 wait:function (t,V){ // horrible way to send time (in milliseconds) burning through CPU :-(
