@@ -180,7 +180,7 @@ cluster:function(M0){
 		}
 	}
 
-	return [ind,Mind]
+	return [ind,Mind,as]
 
 },
 
@@ -301,7 +301,7 @@ corr:function(x,y){
 },
 
 crosstab:function(xx,fun){ // cross-tabulate distances between vectors in xx
-	if(!fun){fun=function(x,y){return 1-jmat.corr(x,y)}} // default is simetrical Pearson correlation
+	if(!fun){fun=jmat.corr(x,y)} // default is Pearson correlation
 	return xx.map(function(xi,i){
 		return xx.map(function(xj,j){
 			return fun(xi,xj)
@@ -2129,6 +2129,13 @@ tableUnion:function(tb1,tb2){ // union of two tables
 },
 
 table2html:function(t){  // table, table id, target element id
+	// maybe this is a tab rather than a table object
+	if(!t.rows){
+		t.columns = Object.getOwnPropertyNames
+		t.rows=t.columns.map(function(p){
+			return t[p]
+		})
+	} 
 	var h = '<table>';
 	// header
 	h += '<tr>';
