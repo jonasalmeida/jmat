@@ -301,7 +301,7 @@ corr:function(x,y){
 },
 
 crosstab:function(xx,fun){ // cross-tabulate distances between vectors in xx
-	if(!fun){fun=jmat.corr(x,y)} // default is Pearson correlation
+	if(!fun){fun=jmat.corr} // default is Pearson correlation
 	return xx.map(function(xi,i){
 		return xx.map(function(xj,j){
 			return fun(xi,xj)
