@@ -296,7 +296,9 @@ corr:function(x,y){
 			return jmat.corr(xi,y[i])
 		})
 	}else{
-		return jmat.cov(x,y)/((jmat.var(x)+jmat.var(y))/2)
+		var c = jmat.cov(x,y)/((jmat.var(x)+jmat.var(y))/2)
+		if(isNaN(c)){c=0}
+		return 
 	}
 },
 
