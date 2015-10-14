@@ -298,7 +298,7 @@ corr:function(x,y){
 	}else{
 		var c = jmat.cov(x,y)/((jmat.var(x)+jmat.var(y))/2)
 		if(isNaN(c)){c=0}
-		return 
+		return c
 	}
 },
 
