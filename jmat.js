@@ -2210,6 +2210,16 @@ threshold:function(im,thr){ // image segmentation by thresholding, returns binar
 	return jmat.imMap(dt,function(xy){return (xy>thr)}); // threshold value, thr, is passed to the function through a closure
 },
 
+toPrecision:function(x,n){ // applies <num>.toPrecision to a vector
+	if(typeof(x)=='number'){x=[x]}
+	if(!n){n=3}
+	var y = x[0].toPrecision(n)
+	for(var i=1 ; i<x.length ; i++){
+		y+=','+x[i].toPrecision(n)
+	}
+	return y
+},
+
 twitter:{
 	calls:{},
 	loadUser:function(uname,cb){ // load @uname, default callback is console.log
