@@ -2267,6 +2267,18 @@ urlread:function(url,cb){ // inspired by matlab's homonimous
 	this.load('https://webrw.herokuapp.com/?get='+url+'&callback='+cbk);
 },
 
+urlParms:function(x){ // parse paramters out of url search or hash
+	if(!x){x='search'} // the obvious alternative is 'hash'
+	var parms={}
+	if(location[x].length>0){		
+		location[x].slice(1).split('&').forEach(function(p){
+			p = p.split('=')
+			parms[p[0]]=p.slice(1).join('=')
+		})
+	}
+	return parms
+},
+
 var:function(x){ // variance
 	if(Array.isArray(x[0])){
 		return x.map(function(xi){
