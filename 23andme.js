@@ -5,7 +5,7 @@ UAB23={
 		// fill div id "wrapper"
 		var ttam2 = TTAM2('09568fd79aa7911dad7727a024936f8d');
         ttam2.snpTable('wrapper', 'rs2476601', {
-            	AA: 'Moderately higher odds of developing hypothyroidism. --> call Columbia University right now :-O',
+            	AA: 'Moderately higher odds of developing hypothyroidism.',
             	AG: 'Slightly higher odds of developing hypothyroidism.',
             	GG: 'Typical odds of developing hypothyroidism.',
             	order: 'AA,AG,GG'
