@@ -2332,3 +2332,8 @@ zeros:function(){
 webrwUrl:'https://webrw.herokuapp.com',//http://165.225.128.64',
 
 }
+
+// require
+if(typeof(define)!=="undefined"){
+	define(jmat)
+}
