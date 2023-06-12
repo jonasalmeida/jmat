@@ -1913,7 +1913,8 @@ saveFile:function(x,fileName) { // x is the content of the file
 			a.download=fileName;
 		}
 		a.click() // then download it automatically 
-	} 
+	}
+	URL.revokeObjectURL(url) // memory garbage collected as discussed in https://developer.mozilla.org/en-US/docs/Web/API/URL/revokeObjectURL_static
 	return a
 },
 
